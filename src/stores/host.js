@@ -189,6 +189,24 @@ export const useHostStore = defineStore("host", {
       api.midi.send(channel, controller, value)
     },
 
+    sendControlMidi(control, value, valueY) {
+      if (!this.midiConnected || control.midiCC === undefined) return
+      const ch = control.midiChannel || 0
+      const toMidi = (v) => Math.round(v * 127)
+      if (control.type === "button" || control.type === "toggle") {
+        this.sendMidi(ch, control.midiCC, value > 0 ? 127 : 0)
+        return
+      }
+      const min = control.min ?? 0
+      const max = control.max ?? 1
+      const norm = (value - min) / (max - min)
+      this.sendMidi(ch, control.midiCC, toMidi(norm))
+      if (control.midiCCY !== undefined && valueY !== undefined) {
+        const normY = (valueY - min) / (max - min)
+        this.sendMidi(ch, control.midiCCY, toMidi(normY))
+      }
+    },
+
     setupListeners() {
       api.relay.onEvent(({ event, data }) => {
         if (event === "control:change") this.handleControlChange(data)
@@ -207,23 +225,7 @@ export const useHostStore = defineStore("host", {
 
       const args = data.valueY !== undefined ? [data.value, data.valueY] : [data.value]
       this.sendOsc(control.oscAddress, args)
-
-      if (this.midiConnected && control.midiCC !== undefined) {
-        const ch = control.midiChannel || 0
-        const toMidi = (v) => Math.round(v * 127)
-        if (control.type === "button" || control.type === "toggle") {
-          this.sendMidi(ch, control.midiCC, data.value > 0 ? 127 : 0)
-        } else {
-          const min = control.min ?? 0
-          const max = control.max ?? 1
-          const norm = (data.value - min) / (max - min)
-          this.sendMidi(ch, control.midiCC, toMidi(norm))
-          if (control.midiCCY !== undefined && data.valueY !== undefined) {
-            const normY = (data.valueY - min) / (max - min)
-            this.sendMidi(ch, control.midiCCY, toMidi(normY))
-          }
-        }
-      }
+      this.sendControlMidi(control, data.value, data.valueY)
     },
 
     handleSeatTaken(data) {

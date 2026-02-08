@@ -8,17 +8,14 @@ export default {
   data: () => ({
     showAddSeat: false,
     newSeatName: "",
-    newSeatColor: "#3498db",
-    editingOsc: false,
-    oscHost: "",
-    oscPort: 9000,
-    oscProtocol: "udp"
+    newSeatColor: "#3498db"
   }),
   computed: {
     host() { return useHostStore() },
     session() { return this.host.session },
     seats() { return this.host.seats },
-    oscLogs() { return this.host.oscLogs }
+    oscLogs() { return this.host.oscLogs },
+    oscConfig() { return this.host.settings.osc }
   },
   methods: {
     addSeat() {
@@ -40,18 +37,6 @@ export default {
     copyCode() {
       navigator.clipboard.writeText(this.session.id)
     },
-    startEditOsc() {
-      const cfg = this.session?.oscConfig || {}
-      this.oscHost = cfg.host || "127.0.0.1"
-      this.oscPort = cfg.port || 9000
-      this.oscProtocol = cfg.protocol || "udp"
-      this.editingOsc = true
-    },
-    async saveOsc() {
-      const config = { host: this.oscHost, port: Number(this.oscPort), protocol: this.oscProtocol }
-      await this.host.connectOsc(config)
-      this.editingOsc = false
-    },
     endSession() {
       this.host.disconnectRelay()
       this.$router.push("/")
@@ -72,20 +57,10 @@ export default {
       <button class='end' @click='endSession'>&larr; End Session</button>
       <div>
         <h1>{{ session?.name }}</h1>
-        <p v-if='!editingOsc' class='osc' @click='startEditOsc'>
-          OSC: {{ session?.oscConfig?.host }}:{{ session?.oscConfig?.port }} ({{ session?.oscConfig?.protocol }})
-          <span class='edit-hint'>click to edit</span>
+        <p class='osc'>
+          OSC: {{ oscConfig.host }}:{{ oscConfig.port }} ({{ oscConfig.protocol }})
+          <router-link to='/settings' class='settings-hint'>settings</router-link>
         </p>
-        <div v-else class='osc-edit'>
-          <input v-model='oscHost' type='text' placeholder='Host' />
-          <input v-model.number='oscPort' type='number' placeholder='Port' />
-          <select v-model='oscProtocol'>
-            <option value='udp'>UDP</option>
-            <option value='tcp'>TCP</option>
-          </select>
-          <button @click='saveOsc'>Reconnect</button>
-          <button class='cancel' @click='editingOsc = false'>Cancel</button>
-        </div>
       </div>
       <div class='share'>
         <div class='code-row'>
@@ -182,49 +157,15 @@ header
 .osc
   font-size: 0.75rem
   color: #666
-  cursor: pointer
 
-  &:hover
-    color: #888
-
-  .edit-hint
+  .settings-hint
     margin-left: 0.5rem
     color: #444
     font-size: 0.625rem
+    text-decoration: none
 
-.osc-edit
-  display: flex
-  gap: 0.5rem
-  margin-top: 0.5rem
-
-  input, select
-    padding: 0.4rem
-    border: 1px solid #333
-    border-radius: 4px
-    background: #1a1a2e
-    color: white
-    font-size: 0.75rem
-
-  input[type='text']
-    width: 120px
-
-  input[type='number']
-    width: 70px
-
-  select
-    width: 70px
-
-  button
-    padding: 0.4rem 0.75rem
-    border: none
-    border-radius: 4px
-    cursor: pointer
-    font-size: 0.75rem
-    background: #4a9eff
-    color: white
-
-    &.cancel
-      background: #333
+    &:hover
+      color: #4a9eff
 
 .share
   margin-left: auto

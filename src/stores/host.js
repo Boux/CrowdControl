@@ -3,12 +3,30 @@ import { nanoid } from "nanoid"
 
 const api = window.electronAPI
 
+const defaultSettings = {
+  osc: { host: "127.0.0.1", port: 9000, protocol: "udp" },
+  relay: { url: "http://localhost:3001" }
+}
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem("crowdosc:settings")
+    if (!raw) return JSON.parse(JSON.stringify(defaultSettings))
+    const saved = JSON.parse(raw)
+    return {
+      osc: { ...defaultSettings.osc, ...saved.osc },
+      relay: { ...defaultSettings.relay, ...saved.relay }
+    }
+  } catch { return JSON.parse(JSON.stringify(defaultSettings)) }
+}
+
 export const useHostStore = defineStore("host", {
   state: () => ({
     connected: false,
     session: null,
     oscConnected: false,
-    oscLogs: []
+    oscLogs: [],
+    settings: loadSettings()
   }),
 
   getters: {
@@ -16,6 +34,12 @@ export const useHostStore = defineStore("host", {
   },
 
   actions: {
+    saveSettings(settings) {
+      this.settings = settings
+      localStorage.setItem("crowdosc:settings", JSON.stringify(settings))
+      if (this.oscConnected) this.connectOsc()
+    },
+
     async connectRelay(url) {
       const result = await api.relay.connect(url)
       this.connected = result.success
@@ -29,8 +53,8 @@ export const useHostStore = defineStore("host", {
       this.session = null
     },
 
-    async createSession(name, oscConfig) {
-      const result = await api.session.create({ name, oscConfig })
+    async createSession(name) {
+      const result = await api.session.create({ name })
       console.log("createSession result:", result)
       if (result.success) {
         this.session = result.session
@@ -97,7 +121,6 @@ export const useHostStore = defineStore("host", {
       const recent = this.getRecent()
       const snapshot = {
         name: this.session.name,
-        oscConfig: this.session.oscConfig,
         seats: this.session.seats.map(s => ({
           id: s.id, name: s.name, color: s.color,
           controls: s.controls.map(c => ({ ...c, value: undefined, valueY: undefined }))
@@ -123,10 +146,10 @@ export const useHostStore = defineStore("host", {
       localStorage.setItem("crowdosc:recent", JSON.stringify(recent))
     },
 
-    async connectOsc(config) {
+    async connectOsc() {
+      const config = { ...this.settings.osc }
       const result = await api.osc.connect(config)
       this.oscConnected = result.success
-      if (result.success && this.session) this.session.oscConfig = config
       return result
     },
 

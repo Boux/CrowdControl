@@ -4,34 +4,29 @@ import { useHostStore } from "../../stores/host"
 export default {
   name: "SetupView",
   data: () => ({
-    relayUrl: "http://localhost:3001",
     sessionName: "",
-    oscHost: "127.0.0.1",
-    oscPort: 9000,
-    oscProtocol: "udp",
     connecting: false,
     recentKey: 0
   }),
   computed: {
     host() { return useHostStore() },
-    valid() { return this.sessionName.trim() && this.oscHost.trim() && this.oscPort > 0 },
+    valid() { return this.sessionName.trim() },
     recentSessions() { this.recentKey; return this.host.getRecent() }
   },
   methods: {
     async start(restoreSeats) {
       this.connecting = true
 
-      const relayResult = await this.host.connectRelay(this.relayUrl)
+      const relayResult = await this.host.connectRelay(this.host.settings.relay.url)
       if (!relayResult.success) {
         alert("Failed to connect to relay: " + relayResult.error)
         this.connecting = false
         return
       }
 
-      const oscConfig = { host: this.oscHost, port: this.oscPort, protocol: this.oscProtocol }
-      await this.host.connectOsc(oscConfig)
+      await this.host.connectOsc()
 
-      const sessionResult = await this.host.createSession(this.sessionName.trim(), oscConfig)
+      const sessionResult = await this.host.createSession(this.sessionName.trim())
       if (!sessionResult.success) {
         alert("Failed to create session: " + sessionResult.error)
         this.connecting = false
@@ -47,10 +42,6 @@ export default {
     },
     reopen(entry) {
       this.sessionName = entry.name
-      const osc = entry.oscConfig || {}
-      this.oscHost = osc.host || "127.0.0.1"
-      this.oscPort = osc.port || 9000
-      this.oscProtocol = osc.protocol || "udp"
       this.start(entry.seats)
     },
     deleteRecent(index) {
@@ -84,39 +75,12 @@ export default {
         </div>
       </div>
 
-      <div class='section'>
-        <h2>Relay Server</h2>
-        <div class='field'>
-          <label>Relay URL</label>
-          <input v-model='relayUrl' type='text' placeholder='http://localhost:3001' />
-        </div>
-      </div>
-
-      <div class='section'>
-        <h2>OSC Output</h2>
-        <div class='row'>
-          <div class='field'>
-            <label>Host</label>
-            <input v-model='oscHost' type='text' placeholder='127.0.0.1' />
-          </div>
-          <div class='field'>
-            <label>Port</label>
-            <input v-model.number='oscPort' type='number' placeholder='9000' />
-          </div>
-          <div class='field'>
-            <label>Protocol</label>
-            <select v-model='oscProtocol'>
-              <option value='udp'>UDP</option>
-              <option value='tcp'>TCP</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
       <button type='submit' :disabled='!valid || connecting'>
         {{ connecting ? "Starting..." : "Start Session" }}
       </button>
     </form>
+
+    <router-link to='/settings' class='settings-link'>Settings</router-link>
 
     <div v-if='recentSessions.length' class='recent'>
       <h2>Recent Sessions</h2>
@@ -181,13 +145,6 @@ h1
       outline: none
       border-color: #4a9eff
 
-.row
-  display: flex
-  gap: 1rem
-
-  .field
-    flex: 1
-
 button[type='submit']
   width: 100%
   padding: 1rem
@@ -202,6 +159,17 @@ button[type='submit']
 
   &:disabled
     opacity: 0.5
+
+.settings-link
+  display: block
+  text-align: center
+  margin-top: 1rem
+  color: #666
+  font-size: 0.875rem
+  text-decoration: none
+
+  &:hover
+    color: #4a9eff
 
 .recent
   margin-top: 2rem

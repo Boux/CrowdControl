@@ -487,6 +487,8 @@ header
     border-radius: 4px
     background: #0d0d1a
     color: white
+    min-width: 0
+    width: 100%
 
     &:focus
       outline: none

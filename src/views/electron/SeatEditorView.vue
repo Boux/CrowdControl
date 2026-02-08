@@ -48,7 +48,16 @@ export default {
       deep: true,
       handler(c) {
         if (!c) return
+        this._skipLocalWatch = true
         this.local = { ...c }
+      }
+    },
+    local: {
+      deep: true,
+      handler() {
+        if (this._skipLocalWatch) { this._skipLocalWatch = false; return }
+        if (!this.selectedControl) return
+        this.host.updateControl(this.seatId, this.selectedId, this.local)
       }
     }
   },
@@ -67,10 +76,6 @@ export default {
         "toggle": { label: "Toggle", oscAddress: `/${baseName}/toggle/${count}`, onValue: 1, offValue: 0, value: 0 }
       }
       this.host.addControl(this.seatId, { type, ...defaults[type], ...layoutDefaults[type] })
-    },
-    saveControl() {
-      if (!this.selectedControl) return
-      this.host.updateControl(this.seatId, this.selectedId, this.local)
     },
     deleteControl() {
       if (!this.selectedControl) return
@@ -289,7 +294,6 @@ export default {
           </div>
 
           <div class='actions'>
-            <button class='save' @click='saveControl'>Save</button>
             <button class='delete' @click='deleteControl'>Delete</button>
           </div>
         </template>
@@ -507,11 +511,6 @@ header
     border: none
     border-radius: 4px
     cursor: pointer
-
-    &.save
-      background: #4a9eff
-      color: white
-      flex: 1
 
     &.delete
       background: transparent

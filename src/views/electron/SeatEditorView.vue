@@ -253,49 +253,56 @@ export default {
         <template v-if='selectedControl'>
           <h3>{{ { "xy-pad": "XY Pad", "fader": "Fader", "button": "Button", "toggle": "Toggle" }[selectedControl.type] }}</h3>
 
-          <div class='field'>
-            <label>Label</label>
-            <input v-model='local.label' type='text' />
-          </div>
+          <div class='section-label'>Layout</div>
+          <table>
+            <tr>
+              <td>Label</td>
+              <td colspan='3'><input v-model='local.label' type='text' /></td>
+            </tr>
+            <tr>
+              <td>X</td>
+              <td><input v-model.number='local.x' type='number' step='1' /></td>
+              <td>Y</td>
+              <td><input v-model.number='local.y' type='number' step='1' /></td>
+            </tr>
+            <tr>
+              <td>W</td>
+              <td><input v-model.number='local.w' type='number' step='1' /></td>
+              <td>H</td>
+              <td><input v-model.number='local.h' type='number' step='1' /></td>
+            </tr>
+            <tr v-if='showOrientation'>
+              <td>Orient.</td>
+              <td colspan='3'>
+                <select v-model='local.orientation'>
+                  <option value='vertical'>Vertical</option>
+                  <option value='horizontal'>Horizontal</option>
+                </select>
+              </td>
+            </tr>
+          </table>
 
-          <div class='field'>
-            <label>OSC Address</label>
-            <input v-model='local.oscAddress' type='text' />
-          </div>
+          <div class='section-label'>OSC</div>
+          <table>
+            <tr>
+              <td>Address</td>
+              <td colspan='3'><input v-model='local.oscAddress' type='text' /></td>
+            </tr>
+            <tr v-if='showMinMax'>
+              <td>Min</td>
+              <td><input v-model.number='local.min' type='number' step='0.01' /></td>
+              <td>Max</td>
+              <td><input v-model.number='local.max' type='number' step='0.01' /></td>
+            </tr>
+            <tr v-if='showOnOff'>
+              <td>On</td>
+              <td><input v-model.number='local.onValue' type='number' step='0.01' /></td>
+              <td>Off</td>
+              <td><input v-model.number='local.offValue' type='number' step='0.01' /></td>
+            </tr>
+          </table>
 
-          <div v-if='showMinMax' class='row'>
-            <div class='field'>
-              <label>Min</label>
-              <input v-model.number='local.min' type='number' step='0.01' />
-            </div>
-            <div class='field'>
-              <label>Max</label>
-              <input v-model.number='local.max' type='number' step='0.01' />
-            </div>
-          </div>
-
-          <div v-if='showOrientation' class='field'>
-            <label>Orientation</label>
-            <select v-model='local.orientation'>
-              <option value='vertical'>Vertical</option>
-              <option value='horizontal'>Horizontal</option>
-            </select>
-          </div>
-
-          <div v-if='showOnOff' class='row'>
-            <div class='field'>
-              <label>On Value</label>
-              <input v-model.number='local.onValue' type='number' step='0.01' />
-            </div>
-            <div class='field'>
-              <label>Off Value</label>
-              <input v-model.number='local.offValue' type='number' step='0.01' />
-            </div>
-          </div>
-
-          <div class='actions'>
-            <button class='delete' @click='deleteControl'>Delete</button>
-          </div>
+          <button class='delete' @click='deleteControl'>Delete Control</button>
         </template>
         <div v-else class='no-selection'>Click a control to edit its settings</div>
       </div>
@@ -454,15 +461,15 @@ header
   font-size: 0.875rem
 
 .settings
-  width: 280px
+  width: 260px
   flex-shrink: 0
   background: #1a1a2e
   border-radius: 8px
-  padding: 1.25rem
+  padding: 0.75rem
 
   h3
-    font-size: 1rem
-    margin: 0 0 1rem
+    font-size: 0.875rem
+    margin: 0 0 0.5rem
     color: #4a9eff
 
 .no-selection
@@ -471,50 +478,54 @@ header
   text-align: center
   padding: 2rem 0
 
-.field
-  display: flex
-  flex-direction: column
-  gap: 0.25rem
-  margin-bottom: 0.75rem
+.section-label
+  font-size: 0.625rem
+  text-transform: uppercase
+  color: #555
+  letter-spacing: 0.05em
+  padding: 0.5rem 0 0.25rem
 
-  label
+table
+  width: 100%
+  border-collapse: collapse
+
+  td
+    padding: 2px
     font-size: 0.75rem
     color: #888
+    vertical-align: middle
+    white-space: nowrap
+
+    &:first-child, &:nth-child(3)
+      width: 1px
+      padding-right: 6px
 
   input, select
-    padding: 0.5rem
+    width: 100%
+    padding: 4px 6px
     border: 1px solid #333
-    border-radius: 4px
+    border-radius: 3px
     background: #0d0d1a
     color: white
+    font-size: 0.75rem
     min-width: 0
-    width: 100%
 
     &:focus
       outline: none
       border-color: #4a9eff
 
-.row
-  display: flex
-  gap: 0.75rem
+.delete
+  width: 100%
+  margin-top: 0.75rem
+  padding: 0.4rem
+  background: transparent
+  border: 1px solid #e74c3c33
+  border-radius: 4px
+  color: #e74c3c
+  font-size: 0.75rem
+  cursor: pointer
 
-  .field
-    flex: 1
-
-.actions
-  display: flex
-  gap: 0.5rem
-  margin-top: 1rem
-  padding-top: 1rem
-  border-top: 1px solid #333
-
-  button
-    padding: 0.5rem 1rem
-    border: none
-    border-radius: 4px
-    cursor: pointer
-
-    &.delete
-      background: transparent
-      color: #e74c3c
+  &:hover
+    background: #e74c3c
+    color: white
 </style>

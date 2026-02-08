@@ -1,13 +1,10 @@
 <script>
 import { useHostStore } from "../../stores/host"
-import XYPad from "../../components/controls/XYPad.vue"
-import Fader from "../../components/controls/Fader.vue"
-import OscButton from "../../components/controls/OscButton.vue"
-import Toggle from "../../components/controls/Toggle.vue"
+import SeatCanvas from "../../components/SeatCanvas.vue"
 
 export default {
   name: "DashboardView",
-  components: { XYPad, Fader, OscButton, Toggle },
+  components: { SeatCanvas },
   data: () => ({
     showAddSeat: false,
     newSeatName: "",
@@ -124,43 +121,12 @@ export default {
           </div>
 
           <div class='seat-controls'>
-            <template v-for='c in seat.controls' :key='c.id'>
-              <div class='control-wrap' :class='c.type'>
-                <XYPad
-                  v-if='c.type === "xy-pad"'
-                  :label='c.label'
-                  :value-x='c.value ?? 0.5'
-                  :value-y='c.valueY ?? 0.5'
-                  :min='c.min'
-                  :max='c.max'
-                  @change='({ x, y }) => onControl(seat, c, x, y)'
-                />
-                <Fader
-                  v-else-if='c.type === "fader"'
-                  :label='c.label'
-                  :value='c.value ?? 0'
-                  :min='c.min'
-                  :max='c.max'
-                  :orientation='c.orientation'
-                  @change='v => onControl(seat, c, v)'
-                />
-                <OscButton
-                  v-else-if='c.type === "button"'
-                  :label='c.label'
-                  @press='onControl(seat, c, c.onValue)'
-                  @release='onControl(seat, c, c.offValue)'
-                />
-                <Toggle
-                  v-else-if='c.type === "toggle"'
-                  :label='c.label'
-                  :value='c.value ?? 0'
-                  :on-value='c.onValue'
-                  :off-value='c.offValue'
-                  @change='v => onControl(seat, c, v)'
-                />
-              </div>
-            </template>
-            <span v-if='!seat.controls.length' class='empty'>No controls</span>
+            <SeatCanvas
+              v-if='seat.controls.length'
+              :controls='seat.controls'
+              @control='(c, v, vy) => onControl(seat, c, v, vy)'
+            />
+            <span v-else class='empty'>No controls</span>
           </div>
 
           <div class='seat-actions'>
@@ -382,19 +348,8 @@ header
       color: #4a9eff
 
 .seat-controls
-  flex: 1
-  display: flex
-  flex-direction: column
-  gap: 0.5rem
+  aspect-ratio: 9 / 19.5
   padding: 0.5rem 0.75rem
-
-  .control-wrap
-    > *
-      width: 100%
-      height: 100%
-
-  .control-wrap.xy-pad
-    aspect-ratio: 1
 
   .empty
     text-align: center

@@ -1,20 +1,10 @@
 <script>
 import { useSessionStore } from "../../stores/session"
-import XYPad from "../../components/controls/XYPad.vue"
-import Fader from "../../components/controls/Fader.vue"
-import OscButton from "../../components/controls/OscButton.vue"
-import Toggle from "../../components/controls/Toggle.vue"
-
-const layoutDefaults = {
-  "xy-pad": { x: 10, y: 30, w: 80, h: 40 },
-  "fader": { x: 35, y: 20, w: 30, h: 60 },
-  "button": { x: 30, y: 42, w: 40, h: 15 },
-  "toggle": { x: 30, y: 44, w: 40, h: 12 }
-}
+import SeatCanvas from "../../components/SeatCanvas.vue"
 
 export default {
   name: "SeatView",
-  components: { XYPad, Fader, OscButton, Toggle },
+  components: { SeatCanvas },
   computed: {
     session() { return useSessionStore() },
     seat() { return this.session.currentSeat },
@@ -39,18 +29,8 @@ export default {
     leave() {
       this.$router.push(`/session/${this.session.session.id}`)
     },
-    onChange(control, value, valueY) {
+    onControl(control, value, valueY) {
       this.session.sendControl(control.id, value, valueY)
-    },
-    controlStyle(c) {
-      const d = layoutDefaults[c.type] || { x: 10, y: 10, w: 80, h: 20 }
-      return {
-        position: "absolute",
-        left: `${c.x ?? d.x}%`,
-        top: `${c.y ?? d.y}%`,
-        width: `${c.w ?? d.w}%`,
-        height: `${c.h ?? d.h}%`
-      }
     }
   }
 }
@@ -65,41 +45,8 @@ export default {
 
     <div v-if='!controls.length' class='empty'>No controls configured yet.</div>
 
-    <div class='controls'>
-      <div v-for='c in controls' :key='c.id' class='control' :style='controlStyle(c)'>
-        <XYPad
-          v-if='c.type === "xy-pad"'
-          :label='c.label'
-          :value-x='c.value'
-          :value-y='c.valueY ?? 0.5'
-          :min='c.min'
-          :max='c.max'
-          @change='({ x, y }) => onChange(c, x, y)'
-        />
-        <Fader
-          v-else-if='c.type === "fader"'
-          :label='c.label'
-          :value='c.value'
-          :min='c.min'
-          :max='c.max'
-          :orientation='c.orientation'
-          @change='v => onChange(c, v)'
-        />
-        <OscButton
-          v-else-if='c.type === "button"'
-          :label='c.label'
-          @press='onChange(c, c.onValue)'
-          @release='onChange(c, c.offValue)'
-        />
-        <Toggle
-          v-else-if='c.type === "toggle"'
-          :label='c.label'
-          :value='c.value'
-          :on-value='c.onValue'
-          :off-value='c.offValue'
-          @change='v => onChange(c, v)'
-        />
-      </div>
+    <div class='canvas'>
+      <SeatCanvas :controls='controls' @control='onControl' />
     </div>
   </div>
 </template>
@@ -142,17 +89,9 @@ header
   border-radius: 8px
   margin: 1rem
 
-.controls
-  position: relative
+.canvas
   flex: 1
   min-height: 0
   width: min(100%, calc((100dvh - 60px) * 9 / 19.5))
   align-self: center
-
-  .control
-    position: absolute
-
-    > *
-      width: 100%
-      height: 100%
 </style>

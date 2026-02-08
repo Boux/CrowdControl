@@ -70,10 +70,10 @@ export default {
       const baseName = this.seat.name.toLowerCase().replace(/\s+/g, "_")
       const count = this.controls.filter(c => c.type === type).length + 1
       const defaults = {
-        "xy-pad": { label: "XY Pad", oscAddress: `/${baseName}/xy/${count}`, min: 0, max: 1, value: 0.5, valueY: 0.5 },
-        "fader": { label: "Fader", oscAddress: `/${baseName}/fader/${count}`, min: 0, max: 1, value: 0, orientation: "vertical" },
-        "button": { label: "Button", oscAddress: `/${baseName}/button/${count}`, onValue: 1, offValue: 0 },
-        "toggle": { label: "Toggle", oscAddress: `/${baseName}/toggle/${count}`, onValue: 1, offValue: 0, value: 0 }
+        "xy-pad": { label: "XY Pad", oscAddress: `/${baseName}/xy${count}`, min: 0, max: 1, value: 0.5, valueY: 0.5 },
+        "fader": { label: "Fader", oscAddress: `/${baseName}/fader${count}`, min: 0, max: 1, value: 0, orientation: "vertical" },
+        "button": { label: "Button", oscAddress: `/${baseName}/button${count}`, onValue: 1, offValue: 0 },
+        "toggle": { label: "Toggle", oscAddress: `/${baseName}/toggle${count}`, onValue: 1, offValue: 0, value: 0 }
       }
       this.host.addControl(this.seatId, { type, ...defaults[type], ...layoutDefaults[type] })
     },

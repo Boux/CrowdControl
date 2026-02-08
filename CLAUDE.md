@@ -29,16 +29,33 @@ CrowdOSC/
 └── package.json
 ```
 
+## Docker
+
+All node/yarn/npm commands must be run through Docker:
+
+```bash
+docker compose run --rm node yarn <command>
+```
+
+Examples:
+```bash
+docker compose run --rm node yarn install
+docker compose run --rm node yarn build
+docker compose run --rm node yarn add <package>
+```
+
+Never run node, yarn, or npm directly on the host.
+
 ## Running
 
 ```bash
 # Relay server
-yarn dev:relay
+docker compose run --rm node yarn dev:relay
 
 # Web app (for participants)
-yarn dev
+docker compose run --rm node yarn dev
 
-# Electron app (for hosts)
+# Electron app (for hosts — requires host display, not dockerized)
 yarn electron
 ```
 

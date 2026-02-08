@@ -14,5 +14,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   osc: {
     connect: (config) => ipcRenderer.invoke("osc:connect", config),
     send: (address, args) => ipcRenderer.invoke("osc:send", { address, args })
+  },
+  midi: {
+    getOutputs: () => ipcRenderer.invoke("midi:getOutputs"),
+    connect: (deviceName) => ipcRenderer.invoke("midi:connect", deviceName),
+    send: (channel, controller, value) => ipcRenderer.invoke("midi:send", { channel, controller, value }),
+    disconnect: () => ipcRenderer.invoke("midi:disconnect")
   }
 })

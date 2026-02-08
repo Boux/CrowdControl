@@ -25,6 +25,7 @@ export default {
       }
 
       await this.host.connectOsc()
+      if (this.host.settings.midi.device) await this.host.connectMidi()
 
       const sessionResult = await this.host.createSession(this.sessionName.trim())
       if (!sessionResult.success) {

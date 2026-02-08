@@ -59,6 +59,9 @@ export default {
         <h1>{{ session?.name }}</h1>
         <p class='osc'>
           OSC: {{ oscConfig.host }}:{{ oscConfig.port }} ({{ oscConfig.protocol }})
+          <template v-if='host.midiConnected'>
+            &middot; MIDI: {{ host.settings.midi.device }}
+          </template>
           <router-link to='/settings' class='settings-hint'>settings</router-link>
         </p>
       </div>

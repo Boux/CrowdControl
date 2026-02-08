@@ -302,6 +302,21 @@ export default {
             </tr>
           </table>
 
+          <div class='section-label'>MIDI</div>
+          <table>
+            <tr>
+              <td>Ch</td>
+              <td><input v-model.number='local.midiChannel' type='number' min='0' max='15' step='1' /></td>
+              <td>CC</td>
+              <td><input v-model.number='local.midiCC' type='number' min='0' max='127' step='1' /></td>
+            </tr>
+            <tr v-if='selectedControl.type === "xy-pad"'>
+              <td colspan='2'></td>
+              <td>CC Y</td>
+              <td><input v-model.number='local.midiCCY' type='number' min='0' max='127' step='1' /></td>
+            </tr>
+          </table>
+
           <button class='delete' @click='deleteControl'>Delete Control</button>
         </template>
         <div v-else class='no-selection'>Click a control to edit its settings</div>

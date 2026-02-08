@@ -5,7 +5,8 @@ const api = window.electronAPI
 
 const defaultSettings = {
   osc: { host: "127.0.0.1", port: 9000, protocol: "udp" },
-  relay: { url: "http://localhost:3001" }
+  relay: { url: "http://localhost:3001" },
+  midi: { device: "" }
 }
 
 function loadSettings() {
@@ -15,7 +16,8 @@ function loadSettings() {
     const saved = JSON.parse(raw)
     return {
       osc: { ...defaultSettings.osc, ...saved.osc },
-      relay: { ...defaultSettings.relay, ...saved.relay }
+      relay: { ...defaultSettings.relay, ...saved.relay },
+      midi: { ...defaultSettings.midi, ...saved.midi }
     }
   } catch { return JSON.parse(JSON.stringify(defaultSettings)) }
 }
@@ -25,6 +27,7 @@ export const useHostStore = defineStore("host", {
     connected: false,
     session: null,
     oscConnected: false,
+    midiConnected: false,
     oscLogs: [],
     settings: loadSettings()
   }),
@@ -38,6 +41,8 @@ export const useHostStore = defineStore("host", {
       this.settings = settings
       localStorage.setItem("crowdosc:settings", JSON.stringify(settings))
       if (this.oscConnected) this.connectOsc()
+      if (settings.midi.device) this.connectMidi()
+      else this.disconnectMidi()
     },
 
     async connectRelay(url) {
@@ -159,6 +164,31 @@ export const useHostStore = defineStore("host", {
       if (this.oscLogs.length > 50) this.oscLogs.pop()
     },
 
+    async getMidiOutputs() {
+      if (!api?.midi) return []
+      return api.midi.getOutputs()
+    },
+
+    async connectMidi() {
+      if (!api?.midi) return { success: false }
+      const device = this.settings.midi.device
+      if (!device) return { success: false }
+      const result = await api.midi.connect(device)
+      this.midiConnected = result.success
+      return result
+    },
+
+    disconnectMidi() {
+      if (!api?.midi) return
+      api.midi.disconnect()
+      this.midiConnected = false
+    },
+
+    sendMidi(channel, controller, value) {
+      if (!api?.midi) return
+      api.midi.send(channel, controller, value)
+    },
+
     setupListeners() {
       api.relay.onEvent(({ event, data }) => {
         if (event === "control:change") this.handleControlChange(data)
@@ -177,6 +207,23 @@ export const useHostStore = defineStore("host", {
 
       const args = data.valueY !== undefined ? [data.value, data.valueY] : [data.value]
       this.sendOsc(control.oscAddress, args)
+
+      if (this.midiConnected && control.midiCC !== undefined) {
+        const ch = control.midiChannel || 0
+        const toMidi = (v) => Math.round(v * 127)
+        if (control.type === "button" || control.type === "toggle") {
+          this.sendMidi(ch, control.midiCC, data.value > 0 ? 127 : 0)
+        } else {
+          const min = control.min ?? 0
+          const max = control.max ?? 1
+          const norm = (data.value - min) / (max - min)
+          this.sendMidi(ch, control.midiCC, toMidi(norm))
+          if (control.midiCCY !== undefined && data.valueY !== undefined) {
+            const normY = (data.valueY - min) / (max - min)
+            this.sendMidi(ch, control.midiCCY, toMidi(normY))
+          }
+        }
+      }
     },
 
     handleSeatTaken(data) {

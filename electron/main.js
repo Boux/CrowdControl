@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain } from "electron"
 import path from "path"
 import { fileURLToPath } from "url"
 import { createOscClient, sendOsc } from "./osc.js"
+import { getOutputs, connectMidi, sendCC, closeMidi } from "./midi.js"
 import { connectToRelay, disconnectFromRelay, createSession, updateSession, kickFromSeat } from "./relay.js"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -56,3 +57,11 @@ ipcMain.handle("osc:send", (_, { address, args }) => {
   if (!oscClient) return
   sendOsc(oscClient, address, args)
 })
+
+ipcMain.handle("midi:getOutputs", () => getOutputs())
+
+ipcMain.handle("midi:connect", (_, deviceName) => connectMidi(deviceName))
+
+ipcMain.handle("midi:send", (_, { channel, controller, value }) => sendCC(channel, controller, value))
+
+ipcMain.handle("midi:disconnect", () => closeMidi())

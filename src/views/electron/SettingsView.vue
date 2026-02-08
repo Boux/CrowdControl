@@ -5,6 +5,7 @@ export default {
   name: "SettingsView",
   data: () => ({
     local: {},
+    midiOutputs: [],
     _skipLocalWatch: false
   }),
   computed: {
@@ -20,10 +21,16 @@ export default {
       }
     }
   },
-  created() {
+  methods: {
+    async refreshMidiOutputs() {
+      this.midiOutputs = await this.host.getMidiOutputs()
+    }
+  },
+  async created() {
     this._skipLocalWatch = true
     this.local = JSON.parse(JSON.stringify(this.host.settings))
     this.$nextTick(() => { this._skipLocalWatch = false })
+    await this.refreshMidiOutputs()
   }
 }
 </script>
@@ -60,6 +67,22 @@ export default {
             <option value='udp'>UDP</option>
             <option value='tcp'>TCP</option>
           </select>
+        </td>
+      </tr>
+    </table>
+
+    <div class='section-label'>MIDI Output</div>
+    <table>
+      <tr>
+        <td>Device</td>
+        <td>
+          <div class='midi-row'>
+            <select v-model='local.midi.device'>
+              <option value=''>Disabled</option>
+              <option v-for='d in midiOutputs' :key='d' :value='d'>{{ d }}</option>
+            </select>
+            <button type='button' class='refresh' @click='refreshMidiOutputs'>&#x21bb;</button>
+          </div>
         </td>
       </tr>
     </table>
@@ -131,4 +154,24 @@ table
     &:focus
       outline: none
       border-color: #4a9eff
+
+.midi-row
+  display: flex
+  gap: 0.5rem
+
+  select
+    flex: 1
+
+  .refresh
+    padding: 4px 8px
+    background: #333
+    border: 1px solid #444
+    border-radius: 4px
+    color: #888
+    cursor: pointer
+    font-size: 0.9rem
+
+    &:hover
+      border-color: #4a9eff
+      color: #4a9eff
 </style>

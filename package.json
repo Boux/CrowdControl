@@ -11,6 +11,7 @@
     "electron:build": "vite build && electron-builder"
   },
   "dependencies": {
+    "easymidi": "^3.1.0",
     "nanoid": "^5.0.0",
     "osc": "^2.4.0",
     "pinia": "^3.0.4",
@@ -19,6 +20,7 @@
     "vue-router": "^4.6.0"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.0.3",
     "@vitejs/plugin-vue": "^6.0.1",
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",

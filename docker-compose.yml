@@ -6,14 +6,6 @@ services:
       - node_modules:/app/node_modules
     network_mode: host
 
-  relay:
-    build: .
-    command: yarn dev:relay
-    volumes:
-      - .:/app
-      - node_modules:/app/node_modules
-    network_mode: host
-
   dev:
     build: .
     command: yarn dev

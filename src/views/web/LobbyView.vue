@@ -16,8 +16,7 @@ export default {
       this.loading = false
       return
     }
-    const relayUrl = import.meta.env.VITE_RELAY_URL || "http://localhost:3001"
-    if (!this.relay.connected) await this.relay.connect(relayUrl)
+    if (!this.relay.connected) await this.relay.connect()
     if (!this.relay.connected) {
       this.error = "Could not connect to relay server"
       this.loading = false

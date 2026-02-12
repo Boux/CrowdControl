@@ -10,8 +10,7 @@ export default {
     session() { return useSessionStore() }
   },
   async mounted() {
-    const relayUrl = import.meta.env.VITE_RELAY_URL || "http://localhost:3001"
-    await this.relay.connect(relayUrl)
+    await this.relay.connect()
   },
   methods: {
     async join() {

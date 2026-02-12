@@ -5,8 +5,8 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
-    "dev:relay": "node --watch server/index.js",
     "build": "vite build",
+    "serve": "node server/index.js",
     "electron": "NODE_ENV=development electron .",
     "electron:build": "vite build && electron-builder"
   },

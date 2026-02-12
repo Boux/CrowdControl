@@ -50,14 +50,6 @@ export default {
       </tr>
     </table>
 
-    <div class='section-label'>Web App</div>
-    <table>
-      <tr>
-        <td>Public URL</td>
-        <td><input v-model='local.publicUrl' type='text' placeholder='http://localhost:5173' /></td>
-      </tr>
-    </table>
-
     <div class='section-label'>OSC Output</div>
     <table>
       <tr>

@@ -19,7 +19,7 @@ export default {
     oscLogs() { return this.host.oscLogs },
     oscConfig() { return this.host.settings.osc },
     sessionUrl() {
-      const base = this.host.settings.publicUrl.replace(/\/$/, "")
+      const base = this.host.settings.relay.url.replace(/\/$/, "")
       return `${base}/session/${this.session?.id}`
     }
   },

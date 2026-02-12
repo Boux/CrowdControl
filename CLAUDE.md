@@ -12,8 +12,9 @@ Phones (web) <--WebSocket--> Relay Server <--WebSocket--> Electron App --OSC--> 
 
 ```
 CrowdOSC/
-├── server/           # Cloud relay server
-│   └── index.js
+├── server/           # Production server (web + relay)
+│   ├── index.js      # Entry point (serves dist/ + socket.io)
+│   └── relay.js      # Socket.io relay logic (shared with Vite plugin)
 ├── electron/         # Electron main process
 │   ├── main.js
 │   ├── preload.js
@@ -49,11 +50,12 @@ Never run node, yarn, or npm directly on the host.
 ## Running
 
 ```bash
-# Relay server
-docker compose run --rm node yarn dev:relay
-
-# Web app (for participants)
+# Dev (web app + relay on same server, port 5173)
 docker compose run --rm node yarn dev
+
+# Production (build then serve on port 3001)
+docker compose run --rm node yarn build
+docker compose run --rm node yarn serve
 
 # Electron app (for hosts — requires host display, not dockerized)
 yarn electron

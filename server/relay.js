@@ -84,6 +84,18 @@ export function attachRelay(httpServer) {
       })
     })
 
+    socket.on("host:controlChange", (data) => {
+      const session = sessions.get(data.sessionId)
+      if (!session || session.hostSocketId !== socket.id) return
+
+      socket.to(`session:${data.sessionId}`).emit("control:change", {
+        seatId: data.seatId,
+        controlId: data.controlId,
+        value: data.value,
+        valueY: data.valueY
+      })
+    })
+
     socket.on("host:kick", (data) => {
       const session = sessions.get(data.sessionId)
       if (!session || session.hostSocketId !== socket.id) return

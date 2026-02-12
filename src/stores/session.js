@@ -67,6 +67,14 @@ export const useSessionStore = defineStore("session", {
         this.currentSeat = session.seats.find(s => s.id === this.currentSeat.id) || null
       })
 
+      relay.on("control:change", ({ seatId, controlId, value, valueY }) => {
+        if (!this.currentSeat || this.currentSeat.id !== seatId) return
+        const idx = this.currentSeat.controls.findIndex(c => c.id === controlId)
+        if (idx === -1) return
+        const control = this.currentSeat.controls[idx]
+        this.currentSeat.controls[idx] = { ...control, value, ...(valueY !== undefined && { valueY }) }
+      })
+
       relay.on("session:closed", () => {
         this.session = null
         this.currentSeat = null

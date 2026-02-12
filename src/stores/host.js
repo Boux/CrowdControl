@@ -158,6 +158,10 @@ export const useHostStore = defineStore("host", {
       return result
     },
 
+    sendControlChange(seatId, controlId, value, valueY) {
+      api.session.controlChange({ seatId, controlId, value, valueY })
+    },
+
     sendOsc(address, args) {
       api.osc.send(address, args)
       this.oscLogs.unshift({ address, args: args.map(v => v.toFixed(2)).join(", "), time: Date.now() })

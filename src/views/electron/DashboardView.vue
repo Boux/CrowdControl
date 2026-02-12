@@ -66,6 +66,7 @@ export default {
       const args = valueY !== undefined ? [value, valueY] : [value]
       this.host.sendOsc(control.oscAddress, args)
       this.host.sendControlMidi(control, value, valueY)
+      this.host.sendControlChange(seat.id, control.id, value, valueY)
     }
   }
 }

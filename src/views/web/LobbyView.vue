@@ -43,7 +43,10 @@ export default {
 <template>
   <div class='lobby'>
     <div v-if='loading' class='center'>Connecting...</div>
-    <div v-else-if='error' class='center error'>{{ error }}</div>
+    <div v-else-if='error' class='center'>
+      <p class='error'>{{ error }}</p>
+      <router-link to='/' class='back-btn'>Back to Home</router-link>
+    </div>
     <template v-else>
       <header>
         <h1>{{ session.session?.name }}</h1>
@@ -164,6 +167,19 @@ h2
   padding: 4rem 2rem
   color: #888
 
-  &.error
+  .error
     color: #e74c3c
+    margin-bottom: 1.5rem
+
+.back-btn
+  display: inline-block
+  padding: 0.75rem 1.5rem
+  background: #333
+  border-radius: 8px
+  color: white
+  text-decoration: none
+  font-size: 0.875rem
+
+  &:hover
+    background: #4a9eff
 </style>

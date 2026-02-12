@@ -3,7 +3,7 @@ import path from "path"
 import { fileURLToPath } from "url"
 import { createOscClient, sendOsc } from "./osc.js"
 import { getOutputs, connectMidi, sendCC, closeMidi } from "./midi.js"
-import { connectToRelay, disconnectFromRelay, createSession, updateSession, kickFromSeat } from "./relay.js"
+import { connectToRelay, disconnectFromRelay, createSession, updateSession, kickFromSeat, sendControlChange } from "./relay.js"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const isDev = process.env.NODE_ENV === "development"
@@ -47,6 +47,8 @@ ipcMain.handle("session:create", async (_, data) => createSession(data))
 ipcMain.handle("session:update", (_, data) => updateSession(data))
 
 ipcMain.handle("session:kick", (_, data) => kickFromSeat(data))
+
+ipcMain.handle("session:controlChange", (_, data) => sendControlChange(data))
 
 ipcMain.handle("osc:connect", async (_, config) => {
   oscClient = createOscClient(config)

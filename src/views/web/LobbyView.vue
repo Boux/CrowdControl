@@ -1,12 +1,31 @@
 <script>
+import { useRelayStore } from "../../stores/relay"
 import { useSessionStore } from "../../stores/session"
 
 export default {
   name: "LobbyView",
+  data: () => ({ loading: true, error: null }),
   computed: {
+    relay() { return useRelayStore() },
     session() { return useSessionStore() },
     seats() { return this.session.seats },
     availableSeats() { return this.session.availableSeats }
+  },
+  async mounted() {
+    if (this.session.session?.id === this.$route.params.id) {
+      this.loading = false
+      return
+    }
+    const relayUrl = import.meta.env.VITE_RELAY_URL || "http://localhost:3001"
+    if (!this.relay.connected) await this.relay.connect(relayUrl)
+    if (!this.relay.connected) {
+      this.error = "Could not connect to relay server"
+      this.loading = false
+      return
+    }
+    await this.session.join(this.$route.params.id)
+      .catch(err => { this.error = err.message })
+    this.loading = false
   },
   methods: {
     async takeSeat(seatId) {
@@ -24,34 +43,38 @@ export default {
 
 <template>
   <div class='lobby'>
-    <header>
-      <h1>{{ session.session?.name }}</h1>
-      <p class='code'>{{ session.session?.id }}</p>
-    </header>
+    <div v-if='loading' class='center'>Connecting...</div>
+    <div v-else-if='error' class='center error'>{{ error }}</div>
+    <template v-else>
+      <header>
+        <h1>{{ session.session?.name }}</h1>
+        <p class='code'>{{ session.session?.id }}</p>
+      </header>
 
-    <h2>Choose a Seat</h2>
+      <h2>Choose a Seat</h2>
 
-    <button v-if='availableSeats.length' class='random-btn' @click='takeRandom'>Random Seat</button>
+      <button v-if='availableSeats.length' class='random-btn' @click='takeRandom'>Random Seat</button>
 
-    <div class='seats'>
-      <div
-        v-for='seat in seats'
-        :key='seat.id'
-        class='seat'
-        :class='{ occupied: seat.occupiedBy }'
-        :style='{ borderColor: seat.color }'
-        @click='!seat.occupiedBy && takeSeat(seat.id)'
-      >
-        <div class='color' :style='{ background: seat.color }'></div>
-        <div class='info'>
-          <span class='name'>{{ seat.name }}</span>
-          <span class='controls'>{{ seat.controls?.length || 0 }} controls</span>
+      <div class='seats'>
+        <div
+          v-for='seat in seats'
+          :key='seat.id'
+          class='seat'
+          :class='{ occupied: seat.occupiedBy }'
+          :style='{ borderColor: seat.color }'
+          @click='!seat.occupiedBy && takeSeat(seat.id)'
+        >
+          <div class='color' :style='{ background: seat.color }'></div>
+          <div class='info'>
+            <span class='name'>{{ seat.name }}</span>
+            <span class='controls'>{{ seat.controls?.length || 0 }} controls</span>
+          </div>
+          <span v-if='seat.occupiedBy' class='badge'>Taken</span>
         </div>
-        <span v-if='seat.occupiedBy' class='badge'>Taken</span>
       </div>
-    </div>
 
-    <p v-if='!seats.length' class='empty'>No seats yet. Wait for the host to add some.</p>
+      <p v-if='!seats.length' class='empty'>No seats yet. Wait for the host to add some.</p>
+    </template>
   </div>
 </template>
 
@@ -136,4 +159,12 @@ h2
   text-align: center
   color: #666
   padding: 2rem
+
+.center
+  text-align: center
+  padding: 4rem 2rem
+  color: #888
+
+  &.error
+    color: #e74c3c
 </style>

@@ -6,7 +6,8 @@ const api = window.electronAPI
 const defaultSettings = {
   osc: { host: "127.0.0.1", port: 9000, protocol: "udp" },
   relay: { url: "http://localhost:3001" },
-  midi: { device: "" }
+  midi: { device: "" },
+  publicUrl: "http://localhost:5173"
 }
 
 function loadSettings() {
@@ -17,7 +18,8 @@ function loadSettings() {
     return {
       osc: { ...defaultSettings.osc, ...saved.osc },
       relay: { ...defaultSettings.relay, ...saved.relay },
-      midi: { ...defaultSettings.midi, ...saved.midi }
+      midi: { ...defaultSettings.midi, ...saved.midi },
+      publicUrl: saved.publicUrl || defaultSettings.publicUrl
     }
   } catch { return JSON.parse(JSON.stringify(defaultSettings)) }
 }

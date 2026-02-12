@@ -1,6 +1,7 @@
 <script>
 import { useHostStore } from "../../stores/host"
 import SeatCanvas from "../../components/SeatCanvas.vue"
+import QRCode from "qrcode"
 
 export default {
   name: "DashboardView",
@@ -8,16 +9,34 @@ export default {
   data: () => ({
     showAddSeat: false,
     newSeatName: "",
-    newSeatColor: "#3498db"
+    newSeatColor: "#3498db",
+    qrDataUrl: null
   }),
   computed: {
     host() { return useHostStore() },
     session() { return this.host.session },
     seats() { return this.host.seats },
     oscLogs() { return this.host.oscLogs },
-    oscConfig() { return this.host.settings.osc }
+    oscConfig() { return this.host.settings.osc },
+    sessionUrl() {
+      const base = this.host.settings.publicUrl.replace(/\/$/, "")
+      return `${base}/session/${this.session?.id}`
+    }
+  },
+  watch: {
+    sessionUrl: {
+      immediate: true,
+      handler(url) { this.generateQr(url) }
+    }
   },
   methods: {
+    async generateQr(url) {
+      this.qrDataUrl = await QRCode.toDataURL(url, {
+        width: 200,
+        margin: 1,
+        color: { dark: "#ffffff", light: "#00000000" }
+      })
+    },
     addSeat() {
       if (!this.newSeatName.trim()) return
       this.host.addSeat(this.newSeatName.trim(), this.newSeatColor)
@@ -67,9 +86,13 @@ export default {
         </p>
       </div>
       <div class='share'>
-        <div class='code-row'>
-          <input type='text' :value='session?.id' readonly />
-          <button @click='copyCode'>Copy</button>
+        <img v-if='qrDataUrl' :src='qrDataUrl' class='qr' />
+        <div class='share-info'>
+          <div class='code-row'>
+            <input type='text' :value='session?.id' readonly />
+            <button @click='copyCode'>Copy</button>
+          </div>
+          <div class='session-url'>{{ sessionUrl }}</div>
         </div>
       </div>
     </header>
@@ -173,6 +196,23 @@ header
 
 .share
   margin-left: auto
+  display: flex
+  align-items: center
+  gap: 0.75rem
+
+.qr
+  width: 80px
+  height: 80px
+
+.share-info
+  display: flex
+  flex-direction: column
+  gap: 0.25rem
+
+.session-url
+  font-size: 0.625rem
+  color: #555
+  word-break: break-all
 
 .code-row
   display: flex

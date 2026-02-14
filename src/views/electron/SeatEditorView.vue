@@ -23,7 +23,8 @@ export default {
     selectedId: null,
     dragging: null,
     resizing: null,
-    local: {}
+    local: {},
+    guides: []
   }),
   computed: {
     host() { return useHostStore() },
@@ -143,6 +144,27 @@ export default {
       this.selectedId = null
     },
 
+    // Snap
+    getSnapEdges(exclude) {
+      const edges = { x: [0, 100], y: [0, 100] }
+      for (const c of this.controls) {
+        if (c.id === exclude) continue
+        const d = layoutDefaults[c.type]
+        const x = c.x ?? d.x, y = c.y ?? d.y, w = c.w ?? d.w, h = c.h ?? d.h
+        edges.x.push(x, x + w)
+        edges.y.push(y, y + h)
+      }
+      return edges
+    },
+    snapValue(val, targets, threshold) {
+      let best = null, bestDist = threshold
+      for (const t of targets) {
+        const dist = Math.abs(val - t)
+        if (dist < bestDist) { best = t; bestDist = dist }
+      }
+      return best
+    },
+
     // Drag
     startDrag(c, e) {
       e.preventDefault()
@@ -169,13 +191,38 @@ export default {
       const dy = ((e.clientY - d.startMouseY) / d.canvasH) * 100
       const w = d.control.w ?? layoutDefaults[d.control.type].w
       const h = d.control.h ?? layoutDefaults[d.control.type].h
-      d.control.x = Math.max(0, Math.min(100 - w, d.startX + dx))
-      d.control.y = Math.max(0, Math.min(100 - h, d.startY + dy))
+      let x = Math.max(0, Math.min(100 - w, d.startX + dx))
+      let y = Math.max(0, Math.min(100 - h, d.startY + dy))
+      if (!e.shiftKey) {
+        const edges = this.getSnapEdges(d.control.id)
+        const th = 2
+        const guides = []
+        const sL = this.snapValue(x, edges.x, th)
+        const sR = this.snapValue(x + w, edges.x, th)
+        const sT = this.snapValue(y, edges.y, th)
+        const sB = this.snapValue(y + h, edges.y, th)
+        if (sL !== null && (sR === null || Math.abs(sL - x) <= Math.abs(sR - (x + w)))) {
+          x = sL; guides.push({ axis: "x", pos: sL })
+        } else if (sR !== null) {
+          x = sR - w; guides.push({ axis: "x", pos: sR })
+        }
+        if (sT !== null && (sB === null || Math.abs(sT - y) <= Math.abs(sB - (y + h)))) {
+          y = sT; guides.push({ axis: "y", pos: sT })
+        } else if (sB !== null) {
+          y = sB - h; guides.push({ axis: "y", pos: sB })
+        }
+        this.guides = guides
+      } else {
+        this.guides = []
+      }
+      d.control.x = x
+      d.control.y = y
     },
     onDragEnd() {
       document.removeEventListener("mousemove", this.onDragMove)
       document.removeEventListener("mouseup", this.onDragEnd)
       this.dragging = null
+      this.guides = []
       this.host.syncSession()
     },
 
@@ -207,33 +254,44 @@ export default {
       const c = r.control
       const dx = ((e.clientX - r.startMouseX) / r.canvasW) * 100
       const dy = ((e.clientY - r.startMouseY) / r.canvasH) * 100
+      const edges = !e.shiftKey ? this.getSnapEdges(c.id) : null
+      const th = 2
+      const guides = []
+      const snap = (v, axis) => {
+        if (!edges) return v
+        const s = this.snapValue(v, edges[axis], th)
+        if (s !== null) { guides.push({ axis, pos: s }); return s }
+        return v
+      }
 
       if (r.handle === "se") {
-        c.w = Math.max(10, r.startW + dx)
-        c.h = Math.max(5, r.startH + dy)
+        c.w = Math.max(10, snap(r.startX + r.startW + dx, "x") - (c.x ?? r.startX))
+        c.h = Math.max(5, snap(r.startY + r.startH + dy, "y") - (c.y ?? r.startY))
       } else if (r.handle === "sw") {
-        const newW = Math.max(10, r.startW - dx)
-        c.x = r.startX + r.startW - newW
-        c.w = newW
-        c.h = Math.max(5, r.startH + dy)
+        const newLeft = snap(r.startX + dx, "x")
+        c.w = Math.max(10, r.startX + r.startW - newLeft)
+        c.x = r.startX + r.startW - c.w
+        c.h = Math.max(5, snap(r.startY + r.startH + dy, "y") - (c.y ?? r.startY))
       } else if (r.handle === "ne") {
-        c.w = Math.max(10, r.startW + dx)
-        const newH = Math.max(5, r.startH - dy)
-        c.y = r.startY + r.startH - newH
-        c.h = newH
+        c.w = Math.max(10, snap(r.startX + r.startW + dx, "x") - (c.x ?? r.startX))
+        const newTop = snap(r.startY + dy, "y")
+        c.h = Math.max(5, r.startY + r.startH - newTop)
+        c.y = r.startY + r.startH - c.h
       } else if (r.handle === "nw") {
-        const newW = Math.max(10, r.startW - dx)
-        c.x = r.startX + r.startW - newW
-        c.w = newW
-        const newH = Math.max(5, r.startH - dy)
-        c.y = r.startY + r.startH - newH
-        c.h = newH
+        const newLeft = snap(r.startX + dx, "x")
+        c.w = Math.max(10, r.startX + r.startW - newLeft)
+        c.x = r.startX + r.startW - c.w
+        const newTop = snap(r.startY + dy, "y")
+        c.h = Math.max(5, r.startY + r.startH - newTop)
+        c.y = r.startY + r.startH - c.h
       }
+      this.guides = guides
     },
     onResizeEnd() {
       document.removeEventListener("mousemove", this.onResizeMove)
       document.removeEventListener("mouseup", this.onResizeEnd)
       this.resizing = null
+      this.guides = []
       this.host.syncSession()
     }
   }
@@ -284,6 +342,7 @@ export default {
               <div class='handle se' @mousedown='startResize(c, "se", $event)'></div>
             </template>
           </div>
+          <div v-for='(g, gi) in guides' :key='"guide-" + gi' class='guide' :class='g.axis' :style='g.axis === "x" ? { left: g.pos + "%" } : { top: g.pos + "%" }'></div>
           <div v-if='!controls.length' class='empty'>Add controls above</div>
         </div>
       </div>
@@ -482,6 +541,23 @@ header
   border: 2px solid #333
   border-radius: 24px
   overflow: hidden
+
+.guide
+  position: absolute
+  z-index: 50
+  pointer-events: none
+
+  &.x
+    top: 0
+    bottom: 0
+    width: 1px
+    background: #4a9eff88
+
+  &.y
+    left: 0
+    right: 0
+    height: 1px
+    background: #4a9eff88
 
 .canvas-control
   position: absolute

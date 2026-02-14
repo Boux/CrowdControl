@@ -61,6 +61,12 @@ export default {
       }
     }
   },
+  mounted() {
+    document.addEventListener("keydown", this.onKeydown)
+  },
+  beforeUnmount() {
+    document.removeEventListener("keydown", this.onKeydown)
+  },
   methods: {
     saveName() {
       this.host.updateSeat(this.seatId, { name: this.name, color: this.color })
@@ -77,6 +83,10 @@ export default {
       }
       this.host.addControl(this.seatId, { type, ...defaults[type], ...layoutDefaults[type] })
     },
+    onKeydown(e) {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return
+      if (e.key === "Delete" || e.key === "Backspace") this.deleteControl()
+    },
     deleteControl() {
       if (!this.selectedControl) return
       const id = this.selectedId
@@ -86,14 +96,15 @@ export default {
     back() {
       this.$router.push("/dashboard")
     },
-    controlStyle(c) {
+    controlStyle(c, i) {
       const d = layoutDefaults[c.type]
       return {
         position: "absolute",
         left: `${c.x ?? d.x}%`,
         top: `${c.y ?? d.y}%`,
         width: `${c.w ?? d.w}%`,
-        height: `${c.h ?? d.h}%`
+        height: `${c.h ?? d.h}%`,
+        zIndex: i
       }
     },
     selectControl(c, e) {
@@ -224,11 +235,11 @@ export default {
       <div class='canvas-wrap'>
         <div ref='canvas' class='canvas' @click='clearSelection'>
           <div
-            v-for='c in controls'
+            v-for='(c, i) in controls'
             :key='c.id'
             class='canvas-control'
             :class='{ selected: c.id === selectedId }'
-            :style='controlStyle(c)'
+            :style='controlStyle(c, i)'
             @mousedown='startDrag(c, $event)'
             @click='selectControl(c, $event)'
           >
@@ -435,7 +446,7 @@ header
 
   &.selected
     border-color: #4a9eff
-    z-index: 10
+    z-index: 100 !important
 
 .control-inner
   width: 100%

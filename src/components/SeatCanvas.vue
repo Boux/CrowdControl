@@ -19,14 +19,15 @@ export default {
   },
   emits: ["control"],
   methods: {
-    controlStyle(c) {
+    controlStyle(c, i) {
       const d = layoutDefaults[c.type] || { x: 10, y: 10, w: 80, h: 20 }
       return {
         position: "absolute",
         left: `${c.x ?? d.x}%`,
         top: `${c.y ?? d.y}%`,
         width: `${c.w ?? d.w}%`,
-        height: `${c.h ?? d.h}%`
+        height: `${c.h ?? d.h}%`,
+        zIndex: i
       }
     },
     onChange(c, value, valueY) {
@@ -38,7 +39,7 @@ export default {
 
 <template>
   <div class='seat-canvas'>
-    <div v-for='c in controls' :key='c.id' class='control' :style='controlStyle(c)'>
+    <div v-for='(c, i) in controls' :key='c.id' class='control' :style='controlStyle(c, i)'>
       <XYPad
         v-if='c.type === "xy-pad"'
         :label='c.label'

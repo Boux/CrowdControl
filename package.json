@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.3",
+    "@vitejs/plugin-basic-ssl": "^2.1.4",
     "@vitejs/plugin-vue": "^6.0.1",
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",

@@ -23,11 +23,16 @@ function createWindow() {
   })
 
   if (isDev) {
-    mainWindow.loadURL("http://localhost:5173")
+    mainWindow.loadURL("https://localhost:5173")
     mainWindow.webContents.openDevTools()
   } else {
     mainWindow.loadFile(path.join(__dirname, "../dist/index.html"))
   }
+}
+
+// Accept self-signed certs in dev
+if (isDev) {
+  app.commandLine.appendSwitch("ignore-certificate-errors")
 }
 
 app.whenReady().then(createWindow)

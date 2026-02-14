@@ -5,7 +5,7 @@ let currentSession = null
 
 export function connectToRelay(url, onEvent) {
   return new Promise((resolve) => {
-    socket = io(url)
+    socket = io(url, { rejectUnauthorized: false })
 
     socket.on("connect", () => {
       console.log("Connected to relay:", socket.id)

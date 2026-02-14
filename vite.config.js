@@ -4,7 +4,7 @@ import basicSsl from "@vitejs/plugin-basic-ssl"
 
 function relayPlugin() {
   return {
-    name: "crowdosc-relay",
+    name: "crowd-control-relay",
     configureServer(server) {
       import("./server/relay.js").then(({ attachRelay }) => {
         attachRelay(server.httpServer)

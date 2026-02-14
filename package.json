@@ -1,5 +1,5 @@
 {
-  "name": "crowdosc",
+  "name": "crowd-control",
   "version": "1.0.0",
   "type": "module",
   "main": "electron/main.js",
@@ -31,8 +31,8 @@
     "vite": "^7.2.4"
   },
   "build": {
-    "appId": "com.crowdosc.app",
-    "productName": "CrowdOSC",
+    "appId": "com.crowdcontrol.app",
+    "productName": "Crowd Control",
     "files": [
       "dist/**/*",
       "electron/**/*"

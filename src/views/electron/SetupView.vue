@@ -72,7 +72,7 @@ export default {
 
 <template>
   <div class='setup'>
-    <h1>CrowdOSC</h1>
+    <h1>Crowd Control</h1>
     <p class='subtitle'>Session Setup</p>
 
     <form @submit.prevent='start'>

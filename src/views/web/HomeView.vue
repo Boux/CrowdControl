@@ -61,7 +61,7 @@ export default {
 
 <template>
   <div class='home'>
-    <h1>CrowdOSC</h1>
+    <h1>Crowd Control</h1>
     <p class='subtitle'>Join a session to control</p>
 
     <div class='status' :class='{ connected: relay.connected }'>

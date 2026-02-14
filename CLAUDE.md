@@ -1,4 +1,4 @@
-# CrowdOSC
+# Crowd Control
 
 Collaborative OSC control surfaces for live events.
 
@@ -11,7 +11,7 @@ Phones (web) <--WebSocket--> Relay Server <--WebSocket--> Electron App --OSC--> 
 ## Project Structure
 
 ```
-CrowdOSC/
+CrowdControl/
 ├── server/           # Production server (web + relay)
 │   ├── index.js      # Entry point (serves dist/ + socket.io)
 │   └── relay.js      # Socket.io relay logic (shared with Vite plugin)

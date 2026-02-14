@@ -9,7 +9,7 @@ function nameToSlug(name) {
 
 const defaultSettings = {
   osc: { host: "127.0.0.1", port: 9000, protocol: "udp" },
-  relay: { url: "http://localhost:5173" },
+  relay: { url: "https://localhost:5173" },
   midi: { device: "" }
 }
 

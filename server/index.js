@@ -17,4 +17,4 @@ app.use(express.static(distPath))
 app.get("*", (req, res) => res.sendFile(join(distPath, "index.html")))
 
 const PORT = process.env.PORT || 3001
-server.listen(PORT, () => console.log(`CrowdOSC server on port ${PORT}`))
+server.listen(PORT, () => console.log(`Crowd Control server on port ${PORT}`))

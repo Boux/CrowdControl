@@ -33,7 +33,12 @@ export default {
     selectedControl() { return this.controls.find(c => c.id === this.selectedId) },
     showMinMax() { return ["xy-pad", "fader"].includes(this.selectedControl?.type) },
     showOrientation() { return this.selectedControl?.type === "fader" },
-    showOnOff() { return ["button", "toggle"].includes(this.selectedControl?.type) }
+    showOnOff() { return ["button", "toggle"].includes(this.selectedControl?.type) },
+    aspectW() { return this.seat?.aspectW || 9 },
+    aspectH() { return this.seat?.aspectH || 19.5 },
+    canvasStyle() {
+      return { aspectRatio: `${this.aspectW} / ${this.aspectH}`, height: `min(100cqh, calc(100cqw * ${this.aspectH} / ${this.aspectW}))` }
+    }
   },
   watch: {
     seat: {
@@ -72,16 +77,39 @@ export default {
       this.host.updateSeat(this.seatId, { name: this.name, color: this.color })
       this.editingName = false
     },
+    setAspect(w, h) {
+      if (w < 1 || h < 1) return
+      this.host.updateSeat(this.seatId, { aspectW: w, aspectH: h })
+    },
+    nextMidiSlot(extra) {
+      const used = new Set()
+      for (const seat of this.host.seats)
+        for (const c of seat.controls) {
+          if (c.midiCC !== undefined) used.add(`${c.midiChannel || 0}:${c.midiCC}`)
+          if (c.midiCCY !== undefined) used.add(`${c.midiChannel || 0}:${c.midiCCY}`)
+        }
+      if (extra) extra.forEach(k => used.add(k))
+      for (let ch = 0; ch < 16; ch++)
+        for (let cc = 0; cc < 128; cc++)
+          if (!used.has(`${ch}:${cc}`)) return { ch, cc }
+      return { ch: 0, cc: 0 }
+    },
     addControl(type) {
       const baseName = this.seat.name.toLowerCase().replace(/\s+/g, "_")
       const count = this.controls.filter(c => c.type === type).length + 1
+      const slot = this.nextMidiSlot()
+      const midi = { midiChannel: slot.ch, midiCC: slot.cc }
+      if (type === "xy-pad") {
+        const slotY = this.nextMidiSlot([`${slot.ch}:${slot.cc}`])
+        midi.midiCCY = slotY.cc === slot.cc + 1 && slotY.ch === slot.ch ? slotY.cc : slotY.cc
+      }
       const defaults = {
         "xy-pad": { label: "XY Pad", oscAddress: `/${baseName}/xy${count}`, min: 0, max: 1, value: 0.5, valueY: 0.5 },
         "fader": { label: "Fader", oscAddress: `/${baseName}/fader${count}`, min: 0, max: 1, value: 0, orientation: "vertical" },
         "button": { label: "Button", oscAddress: `/${baseName}/button${count}`, onValue: 1, offValue: 0 },
         "toggle": { label: "Toggle", oscAddress: `/${baseName}/toggle${count}`, onValue: 1, offValue: 0, value: 0 }
       }
-      this.host.addControl(this.seatId, { type, ...defaults[type], ...layoutDefaults[type] })
+      this.selectedId = this.host.addControl(this.seatId, { type, ...defaults[type], ...layoutDefaults[type], ...midi })
     },
     onKeydown(e) {
       if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return
@@ -233,7 +261,7 @@ export default {
 
     <div class='layout'>
       <div class='canvas-wrap'>
-        <div ref='canvas' class='canvas' @click='clearSelection'>
+        <div ref='canvas' class='canvas' :style='canvasStyle' @click='clearSelection'>
           <div
             v-for='(c, i) in controls'
             :key='c.id'
@@ -317,20 +345,40 @@ export default {
           <table>
             <tr>
               <td>Ch</td>
-              <td><input v-model.number='local.midiChannel' type='number' min='0' max='15' step='1' /></td>
-              <td>CC</td>
-              <td><input v-model.number='local.midiCC' type='number' min='0' max='127' step='1' /></td>
+              <td colspan='3'><input type='number' min='1' max='16' step='1' :value='(local.midiChannel || 0) + 1' @change='local.midiChannel = +$event.target.value - 1' /></td>
             </tr>
             <tr v-if='selectedControl.type === "xy-pad"'>
-              <td colspan='2'></td>
+              <td>CC X</td>
+              <td><input v-model.number='local.midiCC' type='number' min='0' max='127' step='1' /></td>
               <td>CC Y</td>
               <td><input v-model.number='local.midiCCY' type='number' min='0' max='127' step='1' /></td>
+            </tr>
+            <tr v-else>
+              <td>CC</td>
+              <td colspan='3'><input v-model.number='local.midiCC' type='number' min='0' max='127' step='1' /></td>
             </tr>
           </table>
 
           <button class='delete' @click='deleteControl'>Delete Control</button>
         </template>
-        <div v-else class='no-selection'>Click a control to edit its settings</div>
+        <div v-else class='seat-settings'>
+          <h3>Canvas Size</h3>
+          <div class='presets'>
+            <button :class='{ active: aspectW === 9 && aspectH === 19.5 }' @click='setAspect(9, 19.5)'>Phone</button>
+            <button :class='{ active: aspectW === 9 && aspectH === 16 }' @click='setAspect(9, 16)'>Wide</button>
+            <button :class='{ active: aspectW === 3 && aspectH === 4 }' @click='setAspect(3, 4)'>Tablet</button>
+            <button :class='{ active: aspectW === 1 && aspectH === 1 }' @click='setAspect(1, 1)'>Square</button>
+          </div>
+          <table>
+            <tr>
+              <td>W</td>
+              <td><input :value='aspectW' type='number' step='0.5' min='1' @change='setAspect(+$event.target.value, aspectH)' /></td>
+              <td>H</td>
+              <td><input :value='aspectH' type='number' step='0.5' min='1' @change='setAspect(aspectW, +$event.target.value)' /></td>
+            </tr>
+          </table>
+          <div class='no-selection'>Click a control to edit its settings</div>
+        </div>
       </div>
     </div>
   </div>
@@ -430,8 +478,6 @@ header
 
 .canvas
   position: relative
-  aspect-ratio: 9 / 19.5
-  width: min(100cqw, 360px, calc(100cqh * 9 / 19.5))
   background: #0d0d1a
   border: 2px solid #333
   border-radius: 24px
@@ -504,6 +550,35 @@ header
     font-size: 0.875rem
     margin: 0 0 0.5rem
     color: #4a9eff
+
+.seat-settings
+  h3
+    font-size: 0.875rem
+    margin: 0 0 0.5rem
+    color: #4a9eff
+
+.presets
+  display: flex
+  gap: 0.25rem
+  margin-bottom: 0.5rem
+
+  button
+    flex: 1
+    padding: 0.3rem
+    background: #0d0d1a
+    border: 1px solid #333
+    border-radius: 3px
+    color: #888
+    font-size: 0.65rem
+    cursor: pointer
+
+    &:hover
+      border-color: #4a9eff
+      color: white
+
+    &.active
+      border-color: #4a9eff
+      color: #4a9eff
 
 .no-selection
   color: #555

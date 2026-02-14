@@ -70,7 +70,7 @@ export const useHostStore = defineStore("host", {
 
     addSeat(name, color) {
       if (!this.session) return console.error("addSeat: no session")
-      const seat = { id: nanoid(8), name, color, controls: [], occupiedBy: null }
+      const seat = { id: nanoid(8), name, color, controls: [], occupiedBy: null, aspectW: 9, aspectH: 19.5 }
       this.session.seats.push(seat)
       this.syncSession()
       return seat.id
@@ -110,8 +110,10 @@ export const useHostStore = defineStore("host", {
     addControl(seatId, control) {
       const seat = this.session.seats.find(s => s.id === seatId)
       if (!seat) return
-      seat.controls.push({ id: nanoid(8), ...control })
+      const id = nanoid(8)
+      seat.controls.push({ id, ...control })
       this.syncSession()
+      return id
     },
 
     updateControl(seatId, controlId, data) {

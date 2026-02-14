@@ -6,7 +6,8 @@ export default {
   data: () => ({
     sessionName: "",
     connecting: false,
-    recentKey: 0
+    recentKey: 0,
+    confirmIndex: null
   }),
   computed: {
     host() { return useHostStore() },
@@ -45,9 +46,16 @@ export default {
       this.sessionName = entry.name
       this.start(entry.seats)
     },
+    askDelete(index) {
+      this.confirmIndex = index
+    },
     deleteRecent(index) {
       this.host.deleteRecent(index)
+      this.confirmIndex = null
       this.recentKey++
+    },
+    cancelDelete() {
+      this.confirmIndex = null
     },
     timeAgo(ts) {
       const diff = Date.now() - ts
@@ -92,7 +100,14 @@ export default {
         </div>
         <div class='recent-actions'>
           <button class='reopen' @click='reopen(entry)' :disabled='connecting'>Reopen</button>
-          <button class='remove' @click='deleteRecent(i)'>&times;</button>
+          <button class='remove' @click='askDelete(i)'>&times;</button>
+        </div>
+        <div v-if='confirmIndex === i' class='confirm-overlay'>
+          <span>Delete "{{ entry.name }}"?</span>
+          <div class='confirm-actions'>
+            <button class='confirm-yes' @click='deleteRecent(i)'>Yes</button>
+            <button class='confirm-no' @click='cancelDelete'>No</button>
+          </div>
         </div>
       </div>
     </div>
@@ -182,6 +197,7 @@ button[type='submit']
     margin: 1.5rem 0 0.75rem
 
 .recent-entry
+  position: relative
   display: flex
   align-items: center
   justify-content: space-between
@@ -205,6 +221,7 @@ button[type='submit']
 .recent-actions
   display: flex
   gap: 0.5rem
+  align-items: center
 
   .reopen
     padding: 0.5rem 1rem
@@ -230,4 +247,43 @@ button[type='submit']
 
     &:hover
       color: #e74c3c
+
+.confirm-overlay
+  position: absolute
+  inset: 0
+  background: rgba(13, 13, 26, 0.9)
+  border-radius: 6px
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 1rem
+
+  span
+    font-size: 0.85rem
+    color: #e74c3c
+
+.confirm-actions
+  display: flex
+  gap: 0.5rem
+
+  button
+    padding: 0.4rem 1rem
+    border: none
+    border-radius: 4px
+    cursor: pointer
+    font-size: 0.75rem
+
+  .confirm-yes
+    background: #e74c3c
+    color: white
+
+    &:hover
+      background: #c0392b
+
+  .confirm-no
+    background: #333
+    color: #888
+
+    &:hover
+      color: white
 </style>

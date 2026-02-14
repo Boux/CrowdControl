@@ -84,7 +84,7 @@ export default {
       </div>
     </div>
 
-    <div class='seat-controls'>
+    <div class='seat-controls' :style='{ aspectRatio: `${seat.aspectW || 9} / ${seat.aspectH || 19.5}` }'>
       <SeatCanvas
         v-if='seat.controls.length'
         :controls='seat.controls'
@@ -176,7 +176,6 @@ export default {
       color: #4a9eff
 
 .seat-controls
-  aspect-ratio: 9 / 19.5
   padding: 0.5rem 0.75rem
 
   .empty

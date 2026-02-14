@@ -8,7 +8,12 @@ export default {
   computed: {
     session() { return useSessionStore() },
     seat() { return this.session.currentSeat },
-    controls() { return this.session.controls }
+    controls() { return this.session.controls },
+    canvasStyle() {
+      const w = this.seat?.aspectW || 9
+      const h = this.seat?.aspectH || 19.5
+      return { width: `min(100%, calc((100dvh - 60px) * ${w} / ${h}))` }
+    }
   },
   watch: {
     seat(val) {
@@ -45,7 +50,7 @@ export default {
 
     <div v-if='!controls.length' class='empty'>No controls configured yet.</div>
 
-    <div class='canvas'>
+    <div class='canvas' :style='canvasStyle'>
       <SeatCanvas :controls='controls' @control='onControl' />
     </div>
   </div>
@@ -92,6 +97,5 @@ header
 .canvas
   flex: 1
   min-height: 0
-  width: min(100%, calc((100dvh - 60px) * 9 / 19.5))
   align-self: center
 </style>

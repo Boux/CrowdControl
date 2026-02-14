@@ -51,7 +51,7 @@ export default {
     <div v-if='!controls.length' class='empty'>No controls configured yet.</div>
 
     <div class='canvas' :style='canvasStyle'>
-      <SeatCanvas :controls='controls' @control='onControl' />
+      <SeatCanvas :controls='controls' :accent='seat?.color' @control='onControl' />
     </div>
   </div>
 </template>

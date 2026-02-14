@@ -54,6 +54,6 @@ export default {
     background: #252542
 
   &.on
-    background: #4a9eff
-    box-shadow: 0 0 20px rgba(74, 158, 255, 0.5)
+    background: var(--accent, #4a9eff)
+    box-shadow: 0 0 20px color-mix(in srgb, var(--accent, #4a9eff) 50%, transparent)
 </style>

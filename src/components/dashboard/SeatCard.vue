@@ -88,6 +88,7 @@ export default {
       <SeatCanvas
         v-if='seat.controls.length'
         :controls='seat.controls'
+        :accent='seat.color'
         @control='onControl'
       />
       <span v-else class='empty'>No controls</span>

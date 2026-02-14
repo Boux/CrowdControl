@@ -72,11 +72,11 @@ export default {
   overflow: hidden
 
   &.touching
-    box-shadow: 0 0 0 2px #4a9eff
+    box-shadow: 0 0 0 2px var(--accent, #4a9eff)
 
 .fill
   position: absolute
-  background: linear-gradient(to top, #4a9eff, #7b68ee)
+  background: var(--accent, #4a9eff)
 
   .vertical &
     bottom: 0

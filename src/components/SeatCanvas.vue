@@ -15,7 +15,8 @@ export default {
   name: "SeatCanvas",
   components: { XYPad, Fader, OscButton, Toggle },
   props: {
-    controls: { type: Array, default: () => [] }
+    controls: { type: Array, default: () => [] },
+    accent: { type: String, default: null }
   },
   emits: ["control"],
   methods: {
@@ -38,7 +39,7 @@ export default {
 </script>
 
 <template>
-  <div class='seat-canvas'>
+  <div class='seat-canvas' :style='accent ? { "--accent": accent } : {}'>
     <div v-for='(c, i) in controls' :key='c.id' class='control' :style='controlStyle(c, i)'>
       <XYPad
         v-if='c.type === "xy-pad"'

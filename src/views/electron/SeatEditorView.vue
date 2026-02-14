@@ -38,7 +38,9 @@ export default {
     aspectW() { return this.seat?.aspectW || 9 },
     aspectH() { return this.seat?.aspectH || 19.5 },
     canvasStyle() {
-      return { aspectRatio: `${this.aspectW} / ${this.aspectH}`, height: `min(100cqh, calc(100cqw * ${this.aspectH} / ${this.aspectW}))` }
+      const style = { aspectRatio: `${this.aspectW} / ${this.aspectH}`, height: `min(100cqh, calc(100cqw * ${this.aspectH} / ${this.aspectW}))` }
+      if (this.seat?.color) style["--accent"] = this.seat.color
+      return style
     }
   },
   watch: {
@@ -116,6 +118,37 @@ export default {
       if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return
       if (e.key === "Delete" || e.key === "Backspace") this.deleteControl()
     },
+    duplicateControl() {
+      if (!this.selectedControl) return
+      const src = this.selectedControl
+      const copy = JSON.parse(JSON.stringify(src))
+      delete copy.id
+      // unique OSC address
+      if (copy.oscAddress) {
+        const used = new Set()
+        for (const s of this.host.seats)
+          for (const c of s.controls)
+            if (c.oscAddress) used.add(c.oscAddress)
+        const base = copy.oscAddress.replace(/\d*$/, "")
+        for (let n = 2; ; n++) {
+          const addr = base + n
+          if (!used.has(addr)) { copy.oscAddress = addr; break }
+        }
+      }
+      // unique MIDI
+      const slot = this.nextMidiSlot()
+      copy.midiChannel = slot.ch
+      copy.midiCC = slot.cc
+      if (copy.midiCCY !== undefined) {
+        const slotY = this.nextMidiSlot([`${slot.ch}:${slot.cc}`])
+        copy.midiCCY = slotY.cc
+      }
+      // offset position slightly
+      const d = layoutDefaults[copy.type]
+      copy.x = Math.min(100 - (copy.w ?? d.w), (copy.x ?? d.x) + 3)
+      copy.y = Math.min(100 - (copy.h ?? d.h), (copy.y ?? d.y) + 3)
+      this.selectedId = this.host.addControl(this.seatId, copy)
+    },
     deleteControl() {
       if (!this.selectedControl) return
       const id = this.selectedId
@@ -169,6 +202,12 @@ export default {
     startDrag(c, e) {
       e.preventDefault()
       e.stopPropagation()
+      if (e.ctrlKey || e.metaKey) {
+        this.selectedId = c.id
+        this.duplicateControl()
+        c = this.controls.find(ctrl => ctrl.id === this.selectedId)
+        if (!c) return
+      }
       this.selectedId = c.id
       const canvas = this.$refs.canvas
       const rect = canvas.getBoundingClientRect()
@@ -418,7 +457,10 @@ export default {
             </tr>
           </table>
 
-          <button class='delete' @click='deleteControl'>Delete Control</button>
+          <div class='control-actions'>
+            <button class='duplicate' @click='duplicateControl'>Duplicate</button>
+            <button class='delete' @click='deleteControl'>Delete</button>
+          </div>
         </template>
         <div v-else class='seat-settings'>
           <h3>Canvas Size</h3>
@@ -698,18 +740,33 @@ table
       outline: none
       border-color: #4a9eff
 
-.delete
-  width: 100%
+.control-actions
+  display: flex
+  gap: 0.5rem
   margin-top: 0.75rem
-  padding: 0.4rem
-  background: transparent
-  border: 1px solid #e74c3c33
-  border-radius: 4px
-  color: #e74c3c
-  font-size: 0.75rem
-  cursor: pointer
 
-  &:hover
-    background: #e74c3c
-    color: white
+  button
+    flex: 1
+    padding: 0.4rem
+    border-radius: 4px
+    font-size: 0.75rem
+    cursor: pointer
+
+  .duplicate
+    background: transparent
+    border: 1px solid #333
+    color: #888
+
+    &:hover
+      border-color: #4a9eff
+      color: white
+
+  .delete
+    background: transparent
+    border: 1px solid #e74c3c33
+    color: #e74c3c
+
+    &:hover
+      background: #e74c3c
+      color: white
 </style>

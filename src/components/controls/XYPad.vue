@@ -73,7 +73,7 @@ export default {
   overflow: hidden
 
   &.touching
-    box-shadow: 0 0 0 2px #4a9eff
+    box-shadow: 0 0 0 2px var(--accent, #4a9eff)
 
 .grid
   position: absolute
@@ -85,10 +85,10 @@ export default {
   position: absolute
   width: 20px
   height: 20px
-  background: #4a9eff
+  background: var(--accent, #4a9eff)
   border-radius: 50%
   transform: translate(-50%, -50%)
-  box-shadow: 0 0 10px rgba(74, 158, 255, 0.5)
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent, #4a9eff) 50%, transparent)
   pointer-events: none
 
 .label

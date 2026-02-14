@@ -73,12 +73,25 @@ export const useHostStore = defineStore("host", {
       const seat = { id: nanoid(8), name, color, controls: [], occupiedBy: null }
       this.session.seats.push(seat)
       this.syncSession()
+      return seat.id
     },
 
     updateSeat(seatId, data) {
       const seat = this.session.seats.find(s => s.id === seatId)
       if (!seat) return
       Object.assign(seat, data)
+      this.syncSession()
+    },
+
+    duplicateSeat(seatId) {
+      const seat = this.session.seats.find(s => s.id === seatId)
+      if (!seat) return
+      const copy = JSON.parse(JSON.stringify(seat))
+      copy.id = nanoid(8)
+      copy.name = seat.name + " (copy)"
+      copy.occupiedBy = null
+      copy.controls.forEach(c => { c.id = nanoid(8) })
+      this.session.seats.push(copy)
       this.syncSession()
     },
 

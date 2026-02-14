@@ -330,6 +330,10 @@ export default {
   padding: 1.5rem
   max-width: 1100px
   margin: 0 auto
+  height: 100dvh
+  display: flex
+  flex-direction: column
+  box-sizing: border-box
 
 header
   display: flex
@@ -402,18 +406,21 @@ header
   gap: 1.5rem
   margin-top: 1.5rem
   align-items: flex-start
+  flex: 1
+  min-height: 0
 
 .canvas-wrap
   flex: 1
   display: flex
   justify-content: center
+  align-items: center
+  align-self: stretch
+  container-type: size
 
 .canvas
   position: relative
   aspect-ratio: 9 / 19.5
-  max-height: calc(100vh - 220px)
-  width: 100%
-  max-width: 360px
+  width: min(100cqw, 360px, calc(100cqh * 9 / 19.5))
   background: #0d0d1a
   border: 2px solid #333
   border-radius: 24px

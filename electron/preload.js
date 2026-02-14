@@ -1,10 +1,12 @@
 const { contextBridge, ipcRenderer } = require("electron")
 
 contextBridge.exposeInMainWorld("electronAPI", {
+  isDev: process.env.NODE_ENV === "development",
   relay: {
     connect: (url) => ipcRenderer.invoke("relay:connect", url),
     disconnect: () => ipcRenderer.invoke("relay:disconnect"),
-    onEvent: (callback) => ipcRenderer.on("relay:event", (_, data) => callback(data))
+    onEvent: (callback) => ipcRenderer.on("relay:event", (_, data) => callback(data)),
+    getUrl: () => ipcRenderer.invoke("relay:getUrl")
   },
   session: {
     create: (data) => ipcRenderer.invoke("session:create", data),

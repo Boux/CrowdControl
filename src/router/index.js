@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from "vue-router"
+import { createRouter, createWebHistory, createWebHashHistory } from "vue-router"
 
 const isElectron = !!window.electronAPI
 
@@ -18,6 +18,6 @@ const electronRoutes = [
 ]
 
 export default createRouter({
-  history: createWebHistory(),
+  history: isElectron ? createWebHashHistory() : createWebHistory(),
   routes: isElectron ? electronRoutes : webRoutes
 })

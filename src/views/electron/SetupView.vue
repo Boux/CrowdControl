@@ -18,7 +18,8 @@ export default {
     async start(restoreSeats) {
       this.connecting = true
 
-      const relayResult = await this.host.connectRelay(this.host.settings.relay.url)
+      const relayUrl = await window.electronAPI.relay.getUrl()
+      const relayResult = await this.host.connectRelay(relayUrl)
       if (!relayResult.success) {
         alert("Failed to connect to relay: " + relayResult.error)
         this.connecting = false

@@ -57,7 +57,7 @@ export default {
       </div>
 
       <div class='seats-grid'>
-        <SeatCard v-for='seat in seats' :key='seat.id' :seat='seat' :auto-rename='seat.id === newSeatId' />
+        <SeatCard v-for='seat in seats' :key='seat.id' :seat='seat' :auto-rename='seat.id === newSeatId' @duplicate='id => newSeatId = id' />
       </div>
     </div>
 

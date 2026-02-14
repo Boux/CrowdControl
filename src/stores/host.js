@@ -93,6 +93,7 @@ export const useHostStore = defineStore("host", {
       copy.controls.forEach(c => { c.id = nanoid(8) })
       this.session.seats.push(copy)
       this.syncSession()
+      return copy.id
     },
 
     deleteSeat(seatId) {

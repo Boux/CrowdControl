@@ -9,6 +9,7 @@ export default {
     seat: { type: Object, required: true },
     autoRename: { type: Boolean, default: false }
   },
+  emits: ["duplicate"],
   data: () => ({
     editingName: false,
     confirmDelete: false
@@ -43,7 +44,10 @@ export default {
       this.host.sendControlMidi(control, value, valueY)
       this.host.sendControlChange(this.seat.id, control.id, value, valueY)
     },
-    duplicate() { this.host.duplicateSeat(this.seat.id) },
+    duplicate() {
+      const id = this.host.duplicateSeat(this.seat.id)
+      this.$emit("duplicate", id)
+    },
     kick() { this.host.kickSeat(this.seat.id) },
     deleteSeat() {
       if (this.seat.controls.length && !this.confirmDelete) {

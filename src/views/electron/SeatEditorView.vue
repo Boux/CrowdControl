@@ -24,7 +24,9 @@ export default {
     dragging: null,
     resizing: null,
     local: {},
-    guides: []
+    guides: [],
+    undoStack: [],
+    redoStack: []
   }),
   computed: {
     host() { return useHostStore() },
@@ -57,6 +59,7 @@ export default {
       handler(c) {
         if (!c) return
         this._skipLocalWatch = true
+        this._editSnapshotSaved = false
         this.local = { ...c }
       }
     },
@@ -65,6 +68,7 @@ export default {
       handler() {
         if (this._skipLocalWatch) { this._skipLocalWatch = false; return }
         if (!this.selectedControl) return
+        if (!this._editSnapshotSaved) { this.pushHistory(); this._editSnapshotSaved = true }
         this.host.updateControl(this.seatId, this.selectedId, this.local)
       }
     }
@@ -76,6 +80,31 @@ export default {
     document.removeEventListener("keydown", this.onKeydown)
   },
   methods: {
+    pushHistory() {
+      const snapshot = JSON.stringify(this.controls)
+      const top = this.undoStack[this.undoStack.length - 1]
+      if (top === snapshot) return
+      this.undoStack.push(snapshot)
+      this.redoStack = []
+    },
+    restoreSnapshot(snapshot) {
+      this._skipLocalWatch = true
+      this._editSnapshotSaved = true
+      const parsed = JSON.parse(snapshot)
+      this.seat.controls.splice(0, this.seat.controls.length, ...parsed)
+      if (this.selectedId && !parsed.find(c => c.id === this.selectedId)) this.selectedId = null
+      this.host.syncSession()
+    },
+    undo() {
+      if (!this.undoStack.length) return
+      this.redoStack.push(JSON.stringify(this.controls))
+      this.restoreSnapshot(this.undoStack.pop())
+    },
+    redo() {
+      if (!this.redoStack.length) return
+      this.undoStack.push(JSON.stringify(this.controls))
+      this.restoreSnapshot(this.redoStack.pop())
+    },
     saveName() {
       this.host.updateSeat(this.seatId, { name: this.name, color: this.color })
       this.editingName = false
@@ -98,6 +127,7 @@ export default {
       return { ch: 0, cc: 0 }
     },
     addControl(type) {
+      this.pushHistory()
       const baseName = this.seat.name.toLowerCase().replace(/\s+/g, "_")
       const count = this.controls.filter(c => c.type === type).length + 1
       const slot = this.nextMidiSlot()
@@ -115,10 +145,16 @@ export default {
       this.selectedId = this.host.addControl(this.seatId, { type, ...defaults[type], ...layoutDefaults[type], ...midi })
     },
     onKeydown(e) {
+      const mod = e.ctrlKey || e.metaKey
+      const key = e.key.toLowerCase()
+      if (mod && key === "z" && !e.shiftKey) { e.preventDefault(); this.undo(); return }
+      if (mod && key === "z" && e.shiftKey) { e.preventDefault(); this.redo(); return }
+      if (mod && key === "y") { e.preventDefault(); this.redo(); return }
       if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return
       if (e.key === "Delete" || e.key === "Backspace") this.deleteControl()
     },
     duplicateControl() {
+      this.pushHistory()
       if (!this.selectedControl) return
       const src = this.selectedControl
       const copy = JSON.parse(JSON.stringify(src))
@@ -150,6 +186,7 @@ export default {
       this.selectedId = this.host.addControl(this.seatId, copy)
     },
     deleteControl() {
+      this.pushHistory()
       if (!this.selectedControl) return
       const id = this.selectedId
       this.selectedId = null
@@ -202,6 +239,7 @@ export default {
     startDrag(c, e) {
       e.preventDefault()
       e.stopPropagation()
+      this.pushHistory()
       if (e.ctrlKey || e.metaKey) {
         this.selectedId = c.id
         this.duplicateControl()
@@ -269,6 +307,7 @@ export default {
     startResize(c, handle, e) {
       e.preventDefault()
       e.stopPropagation()
+      this.pushHistory()
       const canvas = this.$refs.canvas
       const rect = canvas.getBoundingClientRect()
       const d = layoutDefaults[c.type]

@@ -3,6 +3,10 @@ import { nanoid } from "nanoid"
 
 const api = window.electronAPI
 
+function nameToSlug(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")
+}
+
 const defaultSettings = {
   osc: { host: "127.0.0.1", port: 9000, protocol: "udp" },
   relay: { url: "http://localhost:5173" },
@@ -79,6 +83,14 @@ export const useHostStore = defineStore("host", {
     updateSeat(seatId, data) {
       const seat = this.session.seats.find(s => s.id === seatId)
       if (!seat) return
+      if (data.name && data.name !== seat.name) {
+        const oldSlug = nameToSlug(seat.name)
+        const newSlug = nameToSlug(data.name)
+        if (oldSlug && newSlug && oldSlug !== newSlug)
+          for (const c of seat.controls)
+            if (c.oscAddress?.startsWith("/" + oldSlug + "/"))
+              c.oscAddress = "/" + newSlug + c.oscAddress.slice(oldSlug.length + 1)
+      }
       Object.assign(seat, data)
       this.syncSession()
     },
@@ -90,7 +102,51 @@ export const useHostStore = defineStore("host", {
       copy.id = nanoid(8)
       copy.name = seat.name + " (copy)"
       copy.occupiedBy = null
-      copy.controls.forEach(c => { c.id = nanoid(8) })
+
+      const usedAddresses = new Set()
+      const usedMidi = new Set()
+      for (const s of this.session.seats)
+        for (const c of s.controls) {
+          if (c.oscAddress) usedAddresses.add(c.oscAddress)
+          if (c.midiCC !== undefined) usedMidi.add(`${c.midiChannel || 0}:${c.midiCC}`)
+          if (c.midiCCY !== undefined) usedMidi.add(`${c.midiChannel || 0}:${c.midiCCY}`)
+        }
+
+      const nextMidi = () => {
+        for (let ch = 0; ch < 16; ch++)
+          for (let cc = 0; cc < 128; cc++)
+            if (!usedMidi.has(`${ch}:${cc}`)) { usedMidi.add(`${ch}:${cc}`); return { ch, cc } }
+        return { ch: 0, cc: 0 }
+      }
+
+      const nextAddress = (base) => {
+        if (!usedAddresses.has(base)) { usedAddresses.add(base); return base }
+        for (let n = 2; ; n++) {
+          const addr = base.replace(/\d*$/, "") + n
+          if (!usedAddresses.has(addr)) { usedAddresses.add(addr); return addr }
+        }
+      }
+
+      const oldSlug = nameToSlug(seat.name)
+      const newSlug = nameToSlug(copy.name)
+
+      copy.controls.forEach(c => {
+        c.id = nanoid(8)
+        if (c.oscAddress && oldSlug && newSlug && c.oscAddress.startsWith("/" + oldSlug + "/"))
+          c.oscAddress = "/" + newSlug + c.oscAddress.slice(oldSlug.length + 1)
+        if (c.oscAddress) c.oscAddress = nextAddress(c.oscAddress)
+        if (c.midiCC !== undefined) {
+          const slot = nextMidi()
+          c.midiChannel = slot.ch
+          c.midiCC = slot.cc
+        }
+        if (c.midiCCY !== undefined) {
+          const slot = nextMidi()
+          c.midiCCY = slot.cc
+          if (c.midiChannel !== slot.ch) c.midiChannel = slot.ch
+        }
+      })
+
       this.session.seats.push(copy)
       this.syncSession()
       return copy.id

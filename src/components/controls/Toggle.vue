@@ -24,8 +24,7 @@ export default {
   <button
     class='toggle-button'
     :class='{ on: isOn }'
-    @mousedown='toggle'
-    @touchstart='toggle'
+    @pointerdown='toggle'
   >
     {{ label }}
   </button>

@@ -18,6 +18,7 @@ export default {
   methods: {
     start(e) {
       e.preventDefault()
+      e.target.setPointerCapture(e.pointerId)
       this.touching = true
       this.update(e)
     },
@@ -26,15 +27,15 @@ export default {
       e.preventDefault()
       this.update(e)
     },
-    end() {
+    end(e) {
       this.touching = false
+      e.target.releasePointerCapture(e.pointerId)
     },
     update(e) {
       const rect = this.$el.getBoundingClientRect()
-      const touch = e.touches?.[0] || e
       const p = this.orientation === "vertical"
-        ? 1 - (touch.clientY - rect.top) / rect.height
-        : (touch.clientX - rect.left) / rect.width
+        ? 1 - (e.clientY - rect.top) / rect.height
+        : (e.clientX - rect.left) / rect.width
       const clamped = Math.max(0, Math.min(1, p))
       const value = clamped * (this.max - this.min) + this.min
       this.$emit("change", value)
@@ -47,13 +48,10 @@ export default {
   <div
     class='fader'
     :class='[orientation, { touching }]'
-    @mousedown='start'
-    @mousemove='move'
-    @mouseup='end'
-    @mouseleave='end'
-    @touchstart='start'
-    @touchmove='move'
-    @touchend='end'
+    @pointerdown='start'
+    @pointermove='move'
+    @pointerup='end'
+    @pointercancel='end'
   >
     <div class='fill' :style='fillStyle'></div>
     <div class='handle' :style='handleStyle'></div>

@@ -9,11 +9,13 @@ export default {
   methods: {
     down(e) {
       e.preventDefault()
+      e.target.setPointerCapture(e.pointerId)
       this.pressed = true
       this.$emit("press")
     },
     up(e) {
       e.preventDefault()
+      e.target.releasePointerCapture(e.pointerId)
       this.pressed = false
       this.$emit("release")
     }
@@ -25,11 +27,9 @@ export default {
   <button
     class='osc-button'
     :class='{ pressed }'
-    @mousedown='down'
-    @mouseup='up'
-    @mouseleave='up'
-    @touchstart='down'
-    @touchend='up'
+    @pointerdown='down'
+    @pointerup='up'
+    @pointercancel='up'
   >
     {{ label }}
   </button>

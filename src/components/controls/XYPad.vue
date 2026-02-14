@@ -20,6 +20,7 @@ export default {
   methods: {
     start(e) {
       e.preventDefault()
+      e.target.setPointerCapture(e.pointerId)
       this.touching = true
       this.update(e)
     },
@@ -28,14 +29,14 @@ export default {
       e.preventDefault()
       this.update(e)
     },
-    end() {
+    end(e) {
       this.touching = false
+      e.target.releasePointerCapture(e.pointerId)
     },
     update(e) {
       const rect = this.$el.getBoundingClientRect()
-      const touch = e.touches?.[0] || e
-      const px = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width))
-      const py = Math.max(0, Math.min(1, (touch.clientY - rect.top) / rect.height))
+      const px = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+      const py = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height))
       const x = px * (this.max - this.min) + this.min
       const y = (1 - py) * (this.max - this.min) + this.min
       this.$emit("change", { x, y })
@@ -48,13 +49,10 @@ export default {
   <div
     class='xy-pad'
     :class='{ touching }'
-    @mousedown='start'
-    @mousemove='move'
-    @mouseup='end'
-    @mouseleave='end'
-    @touchstart='start'
-    @touchmove='move'
-    @touchend='end'
+    @pointerdown='start'
+    @pointermove='move'
+    @pointerup='end'
+    @pointercancel='end'
   >
     <div class='grid'></div>
     <div class='indicator' :style='indicatorStyle'></div>

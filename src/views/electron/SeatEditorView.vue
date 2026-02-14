@@ -17,9 +17,7 @@ export default {
   name: "SeatEditorView",
   components: { ControlPalette, XYPad, Fader, OscButton, Toggle },
   data: () => ({
-    editingName: false,
     name: "",
-    color: "",
     selectedId: null,
     dragging: null,
     resizing: null,
@@ -51,7 +49,6 @@ export default {
       handler(s) {
         if (!s) return
         this.name = s.name
-        this.color = s.color
       }
     },
     selectedControl: {
@@ -106,8 +103,12 @@ export default {
       this.restoreSnapshot(this.redoStack.pop())
     },
     saveName() {
-      this.host.updateSeat(this.seatId, { name: this.name, color: this.color })
-      this.editingName = false
+      const trimmed = this.name.trim()
+      if (/[a-z0-9]/i.test(trimmed)) this.host.updateSeat(this.seatId, { name: trimmed })
+      else this.name = this.seat.name
+    },
+    recolor(e) {
+      this.host.updateSeat(this.seatId, { color: e.target.value })
     },
     setAspect(w, h) {
       if (w < 1 || h < 1) return
@@ -380,17 +381,17 @@ export default {
   <div class='editor'>
     <header>
       <button class='back' @click='back'>&larr; Back</button>
-      <div v-if='!editingName' class='title' @click='editingName = true'>
-        <div class='color' :style='{ background: seat?.color }'></div>
-        <h1>{{ seat?.name }}</h1>
-        <span class='hint'>Click to edit</span>
-      </div>
-      <div v-else class='edit-form'>
-        <input v-model='name' type='text' />
-        <input v-model='color' type='color' />
-        <button @click='saveName'>Save</button>
-        <button class='cancel' @click='editingName = false'>Cancel</button>
-      </div>
+      <label class='color-pick' :style='{ background: seat?.color }'>
+        <input type='color' :value='seat?.color' @input='recolor' />
+      </label>
+      <input
+        class='name-input'
+        :class='{ invalid: !/[a-z0-9]/i.test(name) }'
+        v-model='name'
+        type='text'
+        @blur='saveName'
+        @keyup.enter='$event.target.blur()'
+      />
     </header>
 
     <ControlPalette @add='addControl' />
@@ -549,56 +550,45 @@ header
   border-radius: 6px
   cursor: pointer
 
-.title
-  display: flex
-  align-items: center
-  gap: 0.75rem
+.color-pick
+  width: 28px
+  height: 28px
+  border-radius: 6px
+  flex-shrink: 0
   cursor: pointer
-  padding: 0.5rem
-  border-radius: 8px
-
-  &:hover
-    background: #1a1a2e
-
-  h1
-    font-size: 1.5rem
-    margin: 0
-
-  .hint
-    font-size: 0.75rem
-    color: #666
-
-.color
-  width: 24px
-  height: 24px
-  border-radius: 4px
-
-.edit-form
-  display: flex
-  gap: 0.5rem
-
-  input[type='text']
-    padding: 0.5rem
-    border: 1px solid #333
-    border-radius: 4px
-    background: #1a1a2e
-    color: white
+  position: relative
 
   input[type='color']
-    width: 40px
-    border: none
+    position: absolute
+    inset: 0
+    opacity: 0
+    width: 100%
+    height: 100%
     cursor: pointer
-
-  button
-    padding: 0.5rem 1rem
     border: none
-    border-radius: 4px
-    cursor: pointer
-    background: #4a9eff
-    color: white
+    padding: 0
 
-    &.cancel
-      background: #333
+.name-input
+  flex: 1
+  font-size: 1.25rem
+  font-weight: 600
+  padding: 0.4rem 0.6rem
+  border: 1px solid transparent
+  border-radius: 6px
+  background: transparent
+  color: white
+  min-width: 0
+
+  &:hover
+    border-color: #333
+
+  &:focus
+    outline: none
+    border-color: #4a9eff
+    background: #1a1a2e
+
+  &.invalid
+    border-color: #e74c3c
 
 .layout
   display: flex

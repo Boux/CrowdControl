@@ -21,6 +21,7 @@ export default {
     }
   },
   mounted() {
+    if (!this.seat) return this.$router.replace(`/session/${this.$route.params.id}`)
     window.addEventListener("beforeunload", this.handleUnload)
   },
   beforeUnmount() {
@@ -32,6 +33,7 @@ export default {
       this.session.releaseSeat()
     },
     leave() {
+      if (!this.session.session) return this.$router.push("/")
       this.$router.push(`/session/${this.session.session.id}`)
     },
     onControl(control, value, valueY) {
@@ -48,7 +50,7 @@ export default {
       <div class='badge' :style='{ background: seat.color }'>{{ seat.name }}</div>
     </header>
 
-    <div v-if='!controls.length' class='empty'>No controls configured yet.</div>
+    <div v-if='seat && !controls.length' class='empty'>No controls configured yet.</div>
 
     <div class='canvas' :style='canvasStyle'>
       <SeatCanvas :controls='controls' :accent='seat?.color' @control='onControl' />

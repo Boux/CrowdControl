@@ -61,6 +61,12 @@ export function sendControlChange(data) {
   socket.emit("host:controlChange", { sessionId: currentSession.id, ...data })
 }
 
+export function closeSession() {
+  if (!socket || !currentSession) return
+  socket.emit("host:close", { sessionId: currentSession.id })
+  currentSession = null
+}
+
 export function getSession() {
   return currentSession
 }

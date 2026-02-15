@@ -60,13 +60,17 @@ export const useHostStore = defineStore("host", {
       api.relay.disconnect()
       this.connected = false
       this.session = null
+      localStorage.removeItem("crowdosc:active")
     },
 
-    async createSession(name) {
-      const result = await api.session.create({ name })
+    async createSession(name, id) {
+      const payload = { name }
+      if (id) payload.id = id
+      const result = await api.session.create(payload)
       console.log("createSession result:", result)
       if (result.success) {
         this.session = result.session
+        this.saveActiveSession()
         this.saveToRecent()
       }
       return result
@@ -190,7 +194,35 @@ export const useHostStore = defineStore("host", {
     syncSession() {
       const seats = JSON.parse(JSON.stringify(this.session.seats))
       api.session.update({ seats })
+      this.saveActiveSession()
       this.saveToRecent()
+    },
+
+    saveActiveSession() {
+      if (!this.session) return
+      localStorage.setItem("crowdosc:active", JSON.stringify({
+        id: this.session.id,
+        name: this.session.name,
+        seats: this.session.seats
+      }))
+    },
+
+    loadActiveSession() {
+      try {
+        const raw = localStorage.getItem("crowdosc:active")
+        return raw ? JSON.parse(raw) : null
+      } catch { return null }
+    },
+
+    async regenerateSessionId() {
+      if (!this.session) return
+      const seats = JSON.parse(JSON.stringify(this.session.seats))
+      api.session.close()
+      const result = await api.session.create({ name: this.session.name })
+      if (!result.success) return
+      this.session = result.session
+      this.session.seats = seats
+      this.syncSession()
     },
 
     saveToRecent() {

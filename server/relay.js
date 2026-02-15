@@ -17,7 +17,18 @@ export function attachRelay(httpServer) {
     console.log("Connected:", socket.id)
 
     socket.on("host:create", (data, callback) => {
-      const id = nanoid(8)
+      if (data.id && sessions.has(data.id)) {
+        const session = sessions.get(data.id)
+        session.hostSocketId = socket.id
+        if (data.name) session.name = data.name
+        socket.join(`session:${data.id}`)
+        socket.join(`host:${data.id}`)
+        callback({ success: true, session })
+        console.log("Session resumed:", data.id)
+        return
+      }
+
+      const id = data.id || nanoid(8)
       const session = { id, name: data.name, hostSocketId: socket.id, seats: [], oscConfig: data.oscConfig || {} }
       sessions.set(id, session)
       socket.join(`session:${id}`)
@@ -133,8 +144,7 @@ export function attachRelay(httpServer) {
 
       sessions.forEach((session, sessionId) => {
         if (session.hostSocketId === socket.id) {
-          io.to(`session:${sessionId}`).emit("session:closed")
-          sessions.delete(sessionId)
+          session.hostSocketId = null
           return
         }
 

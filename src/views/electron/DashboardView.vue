@@ -7,7 +7,8 @@ export default {
   name: "DashboardView",
   components: { SeatCard, SessionQr },
   data: () => ({
-    newSeatId: null
+    newSeatId: null,
+    restoring: false
   }),
   computed: {
     host() { return useHostStore() },
@@ -19,6 +20,26 @@ export default {
       const base = this.host.settings.relay.url.replace(/\/$/, "")
       return `${base}/session/${this.session?.id}`
     }
+  },
+  async mounted() {
+    if (this.session) return
+    const saved = this.host.loadActiveSession()
+    if (!saved) return this.$router.push("/")
+
+    this.restoring = true
+    const relayUrl = await window.electronAPI.relay.getUrl()
+    const relayResult = await this.host.connectRelay(relayUrl)
+    if (!relayResult.success) { this.restoring = false; return this.$router.push("/") }
+
+    await this.host.connectOsc()
+    if (this.host.settings.midi.device) await this.host.connectMidi()
+
+    const sessionResult = await this.host.createSession(saved.name, saved.id)
+    if (!sessionResult.success) { this.restoring = false; return this.$router.push("/") }
+
+    this.host.session.seats = saved.seats
+    this.host.syncSession()
+    this.restoring = false
   },
   methods: {
     addSeat() {
@@ -59,6 +80,9 @@ export default {
       }
       input.click()
     },
+    async regenerateId() {
+      await this.host.regenerateSessionId()
+    },
     endSession() {
       this.host.disconnectRelay()
       this.$router.push("/")
@@ -68,7 +92,8 @@ export default {
 </script>
 
 <template>
-  <div class='dashboard'>
+  <div v-if='restoring' class='restoring'>Restoring session...</div>
+  <div v-else class='dashboard'>
     <header>
       <button class='end' @click='endSession'>&larr; End Session</button>
       <div>
@@ -81,7 +106,10 @@ export default {
           <router-link to='/settings' class='settings-hint'>settings</router-link>
         </p>
       </div>
-      <SessionQr :url='sessionUrl' :code='session?.id' />
+      <div class='session-actions'>
+        <SessionQr :url='sessionUrl' :code='session?.id' />
+        <button class='regenerate' @click='regenerateId' title='Generate new session ID'>&#x21bb;</button>
+      </div>
     </header>
 
     <div class='seats-section'>
@@ -114,6 +142,14 @@ export default {
 </template>
 
 <style lang='sass' scoped>
+.restoring
+  display: flex
+  align-items: center
+  justify-content: center
+  height: 100vh
+  color: #888
+  font-size: 1.25rem
+
 .dashboard
   padding: 1.5rem
 
@@ -140,6 +176,24 @@ header
   &:hover
     border-color: #e74c3c
     color: #e74c3c
+
+.session-actions
+  display: flex
+  align-items: center
+  gap: 0.5rem
+
+.regenerate
+  padding: 0.25rem 0.5rem
+  background: transparent
+  border: 1px solid #333
+  border-radius: 4px
+  color: #888
+  cursor: pointer
+  font-size: 1rem
+
+  &:hover
+    border-color: #4a9eff
+    color: #4a9eff
 
 .osc
   font-size: 0.75rem

@@ -9,7 +9,8 @@ export default {
   data: () => ({
     newSeatId: null,
     restoring: false,
-    menuOpen: false
+    menuOpen: false,
+    logOpen: false
   }),
   computed: {
     host() { return useHostStore() },
@@ -115,53 +116,57 @@ export default {
 <template>
   <div v-if='restoring' class='restoring'>Restoring session...</div>
   <div v-else class='dashboard'>
-    <header>
-      <IconButton icon='arrow-left' class='end' @click='endSession'>End Session</IconButton>
-      <div>
-        <h1>{{ session?.name }}</h1>
-        <p class='osc'>
-          OSC: {{ oscConfig.host }}:{{ oscConfig.port }} ({{ oscConfig.protocol }})
-          <template v-if='host.midiConnected'>
-            &middot; MIDI: {{ host.settings.midi.device }}
-          </template>
-          <router-link to='/settings' class='settings-hint'>settings</router-link>
-        </p>
-      </div>
-      <SessionQr :url='sessionUrl' :code='session?.id' />
-    </header>
+    <div class='main'>
+      <header>
+        <IconButton icon='arrow-left' class='end' @click='endSession'>End Session</IconButton>
+        <div>
+          <h1>{{ session?.name }}</h1>
+          <p class='osc'>
+            OSC: {{ oscConfig.host }}:{{ oscConfig.port }} ({{ oscConfig.protocol }})
+            <template v-if='host.midiConnected'>
+              &middot; MIDI: {{ host.settings.midi.device }}
+            </template>
+            <router-link to='/settings' class='settings-hint'>settings</router-link>
+          </p>
+        </div>
+        <SessionQr :url='sessionUrl' :code='session?.id' />
+      </header>
 
-    <div class='seats-section'>
-      <div class='section-header'>
-        <h2>Seats ({{ seats.length }})</h2>
-        <div class='section-actions'>
-          <IconButton icon='plus' class='add' @click='addSeat'>Add Seat</IconButton>
-          <div class='menu-wrap' ref='menuWrap'>
-            <IconButton icon='ellipsis-vertical' class='menu-btn' @click='menuOpen = !menuOpen' />
-            <div v-if='menuOpen' class='menu-dropdown'>
-              <IconButton icon='download' @click='importSession(); menuOpen = false'>Import</IconButton>
-              <IconButton icon='upload' @click='exportSession(); menuOpen = false'>Export</IconButton>
-              <IconButton icon='send' @click='resendAll'>Resend All OSC/MIDI</IconButton>
+      <div class='seats-section'>
+        <div class='section-header'>
+          <h2>Seats ({{ seats.length }})</h2>
+          <div class='section-actions'>
+            <IconButton icon='plus' class='add' @click='addSeat'>Add Seat</IconButton>
+            <div class='menu-wrap' ref='menuWrap'>
+              <IconButton icon='ellipsis-vertical' class='menu-btn' @click='menuOpen = !menuOpen' />
+              <div v-if='menuOpen' class='menu-dropdown'>
+                <IconButton icon='download' @click='importSession(); menuOpen = false'>Import</IconButton>
+                <IconButton icon='upload' @click='exportSession(); menuOpen = false'>Export</IconButton>
+                <IconButton icon='send' @click='resendAll'>Resend All OSC/MIDI</IconButton>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class='seats-grid'>
-        <SeatCard v-for='seat in seats' :key='seat.id' :seat='seat' :auto-rename='seat.id === newSeatId' @duplicate='id => newSeatId = id' />
+        <div class='seats-grid'>
+          <SeatCard v-for='seat in seats' :key='seat.id' :seat='seat' :auto-rename='seat.id === newSeatId' @duplicate='id => newSeatId = id' />
+        </div>
       </div>
     </div>
 
-    <div class='osc-section'>
-      <h2>OSC Log</h2>
-      <div class='osc-log'>
+    <div class='osc-bar'>
+      <div v-if='logOpen' class='osc-log'>
         <div v-for='(log, i) in oscLogs' :key='i' class='log'>
           <span class='address'>{{ log.address }}</span>
           <span class='args'>{{ log.args }}</span>
         </div>
         <span v-if='!oscLogs.length' class='empty'>No messages yet</span>
       </div>
+      <div class='osc-header' @click='logOpen = !logOpen'>
+        <span>OSC Log ({{ oscLogs.length }})</span>
+        <Icon :name='logOpen ? "chevron-down" : "chevron-up"' :size='14' />
+      </div>
     </div>
-
   </div>
 </template>
 
@@ -175,6 +180,13 @@ export default {
   font-size: 1.25rem
 
 .dashboard
+  height: 100vh
+  display: flex
+  flex-direction: column
+
+.main
+  flex: 1
+  overflow-y: auto
   padding: 1.5rem
 
 header
@@ -286,21 +298,30 @@ header
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))
   gap: 1rem
 
-.osc-section
-  margin-top: 2rem
+.osc-bar
+  flex-shrink: 0
+  background: #0d0d1a
+  border-top: 1px solid #333
 
-  h2
-    font-size: 1.25rem
-    margin-bottom: 1rem
+.osc-header
+  display: flex
+  justify-content: space-between
+  align-items: center
+  padding: 0.5rem 1rem
+  cursor: pointer
+  font-size: 0.8rem
+  color: #888
+
+  &:hover
+    color: #aaa
 
 .osc-log
-  background: #0d0d1a
-  border-radius: 8px
-  padding: 1rem
-  max-height: 150px
+  padding: 0.5rem 1rem
+  max-height: 200px
   overflow-y: auto
   font-family: monospace
-  font-size: 0.8rem
+  font-size: 0.7rem
+  border-bottom: 1px solid #1a1a2e
 
 .log
   display: flex

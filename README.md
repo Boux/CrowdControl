@@ -2,6 +2,8 @@
 
 Collaborative control surfaces for live events. Audience members join from their phones and get assigned interactive controls (faders, XY pads, buttons, toggles) that send OSC and MIDI to your setup.
 
+<img width="1015" height="825" alt="image" src="https://github.com/user-attachments/assets/cd6e0fec-5383-46b3-8a7f-4c0ffbf0998d" />
+
 ```
 Phones (web) <--WebSocket--> Relay Server <--WebSocket--> Electron App --OSC/MIDI--> Your Software
 ```

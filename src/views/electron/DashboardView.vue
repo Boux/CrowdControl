@@ -138,9 +138,9 @@ export default {
           <div class='menu-wrap' ref='menuWrap'>
             <IconButton icon='ellipsis-vertical' class='menu-btn' @click='menuOpen = !menuOpen' />
             <div v-if='menuOpen' class='menu-dropdown'>
-              <IconButton @click='importSession(); menuOpen = false'>Import</IconButton>
-              <IconButton @click='exportSession(); menuOpen = false'>Export</IconButton>
-              <IconButton @click='resendAll'>Resend All OSC/MIDI</IconButton>
+              <IconButton icon='download' @click='importSession(); menuOpen = false'>Import</IconButton>
+              <IconButton icon='upload' @click='exportSession(); menuOpen = false'>Export</IconButton>
+              <IconButton icon='send' @click='resendAll'>Resend All OSC/MIDI</IconButton>
             </div>
           </div>
         </div>
@@ -258,14 +258,13 @@ header
   overflow: hidden
 
   button
-    display: block
     width: 100%
+    justify-content: flex-start
     padding: 0.6rem 1rem
     background: none
     border: none
     color: #ccc
     cursor: pointer
-    text-align: left
     font-size: 0.8rem
 
     &:hover

@@ -37,7 +37,7 @@ export default {
     <div class='share-info'>
       <div class='code-row'>
         <input type='text' :value='code' readonly />
-        <IconButton @click='copy'>Copy</IconButton>
+        <IconButton icon='copy' @click='copy'>Copy</IconButton>
       </div>
       <div class='session-url'>{{ url }}</div>
     </div>
@@ -49,7 +49,7 @@ export default {
         <img :src='qrLarge' class='qr-large' />
         <div class='qr-modal-url'>{{ url }}</div>
         <div class='qr-modal-code'>{{ code }}</div>
-        <IconButton @click='open = false'>Close</IconButton>
+        <IconButton icon='x' @click='open = false'>Close</IconButton>
       </div>
     </div>
   </Teleport>

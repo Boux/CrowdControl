@@ -1,13 +1,33 @@
 <script>
 import {
-  ArrowLeft, X, EllipsisVertical, RefreshCw, Move,
-  SlidersVertical, Circle, ToggleLeft, ChevronDown, ChevronUp, Plus
+  ArrowLeft, X, EllipsisVertical, RefreshCw, Move, SlidersVertical,
+  Circle, ToggleLeft, ChevronDown, ChevronUp, Plus, Play, Settings,
+  FolderOpen, Download, Upload, Send, Copy, Pencil, Trash2, UserX,
+  Camera, LogIn, Shuffle, Check, Smartphone, Tablet, Monitor, Square
 } from "lucide-vue-next"
 
 const icons = {
   "arrow-left": ArrowLeft,
   "x": X,
   "plus": Plus,
+  "play": Play,
+  "settings": Settings,
+  "folder-open": FolderOpen,
+  "download": Download,
+  "upload": Upload,
+  "send": Send,
+  "copy": Copy,
+  "pencil": Pencil,
+  "trash-2": Trash2,
+  "user-x": UserX,
+  "camera": Camera,
+  "log-in": LogIn,
+  "shuffle": Shuffle,
+  "check": Check,
+  "smartphone": Smartphone,
+  "tablet": Tablet,
+  "monitor": Monitor,
+  "square": Square,
   "ellipsis-vertical": EllipsisVertical,
   "refresh-cw": RefreshCw,
   "move": Move,

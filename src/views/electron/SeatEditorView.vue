@@ -498,17 +498,17 @@ export default {
           </table>
 
           <div class='control-actions'>
-            <IconButton class='duplicate' @click='duplicateControl'>Duplicate</IconButton>
-            <IconButton class='delete' @click='deleteControl'>Delete</IconButton>
+            <IconButton icon='copy' :icon-size='14' class='duplicate' @click='duplicateControl'>Duplicate</IconButton>
+            <IconButton icon='trash-2' :icon-size='14' class='delete' @click='deleteControl'>Delete</IconButton>
           </div>
         </template>
         <div v-else class='seat-settings'>
           <h3>Canvas Size</h3>
           <div class='presets'>
-            <IconButton :class='{ active: aspectW === 9 && aspectH === 19.5 }' @click='setAspect(9, 19.5)'>Phone</IconButton>
-            <IconButton :class='{ active: aspectW === 9 && aspectH === 16 }' @click='setAspect(9, 16)'>Wide</IconButton>
-            <IconButton :class='{ active: aspectW === 3 && aspectH === 4 }' @click='setAspect(3, 4)'>Tablet</IconButton>
-            <IconButton :class='{ active: aspectW === 1 && aspectH === 1 }' @click='setAspect(1, 1)'>Square</IconButton>
+            <IconButton icon='smartphone' :icon-size='12' :class='{ active: aspectW === 9 && aspectH === 19.5 }' @click='setAspect(9, 19.5)'>Phone</IconButton>
+            <IconButton icon='smartphone' :icon-size='12' :class='{ active: aspectW === 9 && aspectH === 16 }' @click='setAspect(9, 16)'>Wide</IconButton>
+            <IconButton icon='tablet' :icon-size='12' :class='{ active: aspectW === 3 && aspectH === 4 }' @click='setAspect(3, 4)'>Tablet</IconButton>
+            <IconButton icon='square' :icon-size='12' :class='{ active: aspectW === 1 && aspectH === 1 }' @click='setAspect(1, 1)'>Square</IconButton>
           </div>
           <table>
             <tr>

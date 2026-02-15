@@ -45,7 +45,7 @@ export default {
     <div v-if='loading' class='center'>Connecting...</div>
     <div v-else-if='error' class='center'>
       <p class='error'>{{ error }}</p>
-      <IconButton to='/' class='back-btn'>Back to Home</IconButton>
+      <IconButton icon='arrow-left' to='/' class='back-btn'>Back to Home</IconButton>
     </div>
     <template v-else>
       <header>
@@ -58,7 +58,7 @@ export default {
 
       <h2>Choose a Seat</h2>
 
-      <IconButton v-if='availableSeats.length' class='random-btn' @click='takeRandom'>Random Seat</IconButton>
+      <IconButton v-if='availableSeats.length' icon='shuffle' class='random-btn' @click='takeRandom'>Random Seat</IconButton>
 
       <div class='seats'>
         <div

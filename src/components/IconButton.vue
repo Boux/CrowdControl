@@ -4,11 +4,16 @@ export default {
   props: {
     icon: { type: String, default: null },
     iconSize: { type: Number, default: 16 },
-    to: { type: [String, Object], default: null }
+    to: { type: [String, Object], default: null },
+    tooltip: { type: String, default: null }
   },
   computed: {
     tag() { return this.to ? "router-link" : "button" },
-    bind() { return this.to ? { to: this.to } : {} }
+    bind() {
+      const b = this.to ? { to: this.to } : {}
+      if (this.tooltip) b.title = this.tooltip
+      return b
+    }
   }
 }
 </script>
@@ -16,7 +21,7 @@ export default {
 <template>
   <component :is='tag' v-bind='bind' class='icon-btn'>
     <Icon v-if='icon' :name='icon' :size='iconSize' />
-    <slot />
+    <slot v-if='!tooltip' />
   </component>
 </template>
 

@@ -96,14 +96,14 @@ export default {
 
     <div v-if='confirmDelete' class='seat-actions confirm'>
       <span>Delete?</span>
-      <IconButton class='delete' @click='deleteSeat'>Yes</IconButton>
-      <IconButton @click='cancelDelete'>No</IconButton>
+      <IconButton icon='check' :icon-size='12' class='delete' @click='deleteSeat'>Yes</IconButton>
+      <IconButton icon='x' :icon-size='12' @click='cancelDelete'>No</IconButton>
     </div>
     <div v-else class='seat-actions'>
-      <IconButton v-if='seat.occupiedBy' class='kick' @click='kick'>Kick</IconButton>
-      <IconButton @click='duplicate'>Duplicate</IconButton>
-      <IconButton @click='edit'>Edit</IconButton>
-      <IconButton class='delete' @click='deleteSeat'>Delete</IconButton>
+      <IconButton v-if='seat.occupiedBy' icon='user-x' :icon-size='14' tooltip='Kick' class='kick' @click='kick' />
+      <IconButton icon='copy' :icon-size='14' tooltip='Duplicate' @click='duplicate' />
+      <IconButton icon='pencil' :icon-size='14' tooltip='Edit' @click='edit' />
+      <IconButton icon='trash-2' :icon-size='14' tooltip='Delete' class='delete' @click='deleteSeat' />
     </div>
   </div>
 </template>

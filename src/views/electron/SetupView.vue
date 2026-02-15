@@ -85,12 +85,12 @@ export default {
         </div>
       </div>
 
-      <IconButton type='submit' :disabled='!valid || connecting'>
+      <IconButton icon='play' type='submit' :disabled='!valid || connecting'>
         {{ connecting ? "Starting..." : "Start Session" }}
       </IconButton>
     </form>
 
-    <IconButton to='/settings' class='settings-link'>Settings</IconButton>
+    <IconButton icon='settings' to='/settings' class='settings-link'>Settings</IconButton>
 
     <div v-if='recentSessions.length' class='recent'>
       <h2>Recent Sessions</h2>
@@ -100,14 +100,14 @@ export default {
           <span class='recent-meta'>{{ entry.seats?.length || 0 }} seats &middot; {{ timeAgo(entry.savedAt) }}</span>
         </div>
         <div class='recent-actions'>
-          <IconButton class='reopen' @click='reopen(entry)' :disabled='connecting'>Reopen</IconButton>
+          <IconButton icon='folder-open' class='reopen' @click='reopen(entry)' :disabled='connecting'>Reopen</IconButton>
           <IconButton icon='x' class='remove' @click='askDelete(i)' />
         </div>
         <div v-if='confirmIndex === i' class='confirm-overlay'>
           <span>Delete "{{ entry.name }}"?</span>
           <div class='confirm-actions'>
-            <IconButton class='confirm-yes' @click='deleteRecent(i)'>Yes</IconButton>
-            <IconButton class='confirm-no' @click='cancelDelete'>No</IconButton>
+            <IconButton icon='check' class='confirm-yes' @click='deleteRecent(i)'>Yes</IconButton>
+            <IconButton icon='x' class='confirm-no' @click='cancelDelete'>No</IconButton>
           </div>
         </div>
       </div>

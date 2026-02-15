@@ -86,9 +86,9 @@ export default {
       </div>
 
       <div class='actions'>
-        <IconButton class='save' @click='save'>Save</IconButton>
-        <IconButton class='cancel' @click='cancel'>Cancel</IconButton>
-        <IconButton class='delete' @click='$emit("delete")'>Delete</IconButton>
+        <IconButton icon='check' class='save' @click='save'>Save</IconButton>
+        <IconButton icon='x' class='cancel' @click='cancel'>Cancel</IconButton>
+        <IconButton icon='trash-2' class='delete' @click='$emit("delete")'>Delete</IconButton>
       </div>
     </div>
   </div>

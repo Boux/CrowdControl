@@ -1,0 +1,1 @@
+- allow simple non-SSL hosting for simpler LAN + self-hosting

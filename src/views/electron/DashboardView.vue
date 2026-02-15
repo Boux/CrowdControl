@@ -80,9 +80,6 @@ export default {
       }
       input.click()
     },
-    async regenerateId() {
-      await this.host.regenerateSessionId()
-    },
     endSession() {
       this.host.disconnectRelay()
       this.$router.push("/")
@@ -106,10 +103,7 @@ export default {
           <router-link to='/settings' class='settings-hint'>settings</router-link>
         </p>
       </div>
-      <div class='session-actions'>
-        <SessionQr :url='sessionUrl' :code='session?.id' />
-        <button class='regenerate' @click='regenerateId' title='Generate new session ID'>&#x21bb;</button>
-      </div>
+      <SessionQr :url='sessionUrl' :code='session?.id' />
     </header>
 
     <div class='seats-section'>
@@ -176,24 +170,6 @@ header
   &:hover
     border-color: #e74c3c
     color: #e74c3c
-
-.session-actions
-  display: flex
-  align-items: center
-  gap: 0.5rem
-
-.regenerate
-  padding: 0.25rem 0.5rem
-  background: transparent
-  border: 1px solid #333
-  border-radius: 4px
-  color: #888
-  cursor: pointer
-  font-size: 1rem
-
-  &:hover
-    border-color: #4a9eff
-    color: #4a9eff
 
 .osc
   font-size: 0.75rem

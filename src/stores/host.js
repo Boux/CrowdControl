@@ -214,17 +214,6 @@ export const useHostStore = defineStore("host", {
       } catch { return null }
     },
 
-    async regenerateSessionId() {
-      if (!this.session) return
-      const seats = JSON.parse(JSON.stringify(this.session.seats))
-      api.session.close()
-      const result = await api.session.create({ name: this.session.name })
-      if (!result.success) return
-      this.session = result.session
-      this.session.seats = seats
-      this.syncSession()
-    },
-
     saveToRecent() {
       if (!this.session) return
       const recent = this.getRecent()

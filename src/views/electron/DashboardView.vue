@@ -8,7 +8,8 @@ export default {
   components: { SeatCard, SessionQr },
   data: () => ({
     newSeatId: null,
-    restoring: false
+    restoring: false,
+    menuOpen: false
   }),
   computed: {
     host() { return useHostStore() },
@@ -20,6 +21,16 @@ export default {
       const base = this.host.settings.relay.url.replace(/\/$/, "")
       return `${base}/session/${this.session?.id}`
     }
+  },
+  created() {
+    this._onClickOutside = (e) => {
+      if (this.menuOpen && this.$refs.menuWrap && !this.$refs.menuWrap.contains(e.target))
+        this.menuOpen = false
+    }
+    document.addEventListener("mousedown", this._onClickOutside)
+  },
+  beforeUnmount() {
+    document.removeEventListener("mousedown", this._onClickOutside)
   },
   async mounted() {
     if (this.session) return
@@ -80,6 +91,19 @@ export default {
       }
       input.click()
     },
+    resendAll() {
+      this.menuOpen = false
+      for (const seat of this.seats)
+        for (const c of seat.controls) {
+          const val = c.value ?? c.min ?? 0
+          const valY = c.valueY ?? c.min ?? 0
+          if (c.oscAddress) {
+            const args = c.type === "xypad" ? [val, valY] : [val]
+            this.host.sendOsc(c.oscAddress, args)
+          }
+          this.host.sendControlMidi(c, val, valY)
+        }
+    },
     endSession() {
       this.host.disconnectRelay()
       this.$router.push("/")
@@ -110,9 +134,15 @@ export default {
       <div class='section-header'>
         <h2>Seats ({{ seats.length }})</h2>
         <div class='section-actions'>
-          <button class='secondary' @click='importSession'>Import</button>
-          <button class='secondary' @click='exportSession'>Export</button>
           <button class='add' @click='addSeat'>+ Add Seat</button>
+          <div class='menu-wrap' ref='menuWrap'>
+            <button class='menu-btn' @click='menuOpen = !menuOpen'>&vellip;</button>
+            <div v-if='menuOpen' class='menu-dropdown'>
+              <button @click='importSession(); menuOpen = false'>Import</button>
+              <button @click='exportSession(); menuOpen = false'>Export</button>
+              <button @click='resendAll'>Resend All OSC/MIDI</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -198,18 +228,51 @@ header
   display: flex
   gap: 0.5rem
 
-.secondary
-  padding: 0.5rem 1rem
+.menu-wrap
+  position: relative
+
+.menu-btn
+  padding: 0.5rem 0.75rem
   background: transparent
   border: 1px solid #333
   border-radius: 6px
   color: #888
   cursor: pointer
-  font-size: 0.8rem
+  font-size: 1.1rem
+  line-height: 1
 
   &:hover
     border-color: #4a9eff
     color: #4a9eff
+
+.menu-dropdown
+  position: absolute
+  right: 0
+  top: 100%
+  margin-top: 0.25rem
+  background: #1a1a2e
+  border: 1px solid #333
+  border-radius: 6px
+  min-width: 180px
+  z-index: 10
+  overflow: hidden
+
+  button
+    display: block
+    width: 100%
+    padding: 0.6rem 1rem
+    background: none
+    border: none
+    color: #ccc
+    cursor: pointer
+    text-align: left
+    font-size: 0.8rem
+
+    &:hover
+      background: #2a2a4a
+
+    & + button
+      border-top: 1px solid #262640
 
 .add
   padding: 0.5rem 1rem

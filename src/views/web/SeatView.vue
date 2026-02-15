@@ -66,6 +66,8 @@ export default {
   flex-direction: column
   padding: 0
   overflow: hidden
+  overscroll-behavior: none
+  touch-action: none
 
 header
   display: flex

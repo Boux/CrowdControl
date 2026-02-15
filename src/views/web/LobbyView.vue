@@ -49,8 +49,11 @@ export default {
     </div>
     <template v-else>
       <header>
-        <h1>{{ session.session?.name }}</h1>
-        <p class='code'>{{ session.session?.id }}</p>
+        <router-link to='/' class='leave'>&larr; Leave</router-link>
+        <div>
+          <h1>{{ session.session?.name }}</h1>
+          <p class='code'>{{ session.session?.id }}</p>
+        </div>
       </header>
 
       <h2>Choose a Seat</h2>
@@ -88,6 +91,9 @@ export default {
   margin: 0 auto
 
 header
+  display: flex
+  align-items: center
+  gap: 1rem
   margin-bottom: 2rem
 
   h1
@@ -97,6 +103,20 @@ header
   .code
     font-size: 0.75rem
     color: #666
+
+.leave
+  padding: 0.5rem 1rem
+  background: transparent
+  border: 1px solid #333
+  color: #888
+  border-radius: 6px
+  text-decoration: none
+  white-space: nowrap
+  font-size: 0.875rem
+
+  &:hover
+    border-color: #4a9eff
+    color: #4a9eff
 
 h2
   font-size: 1.25rem

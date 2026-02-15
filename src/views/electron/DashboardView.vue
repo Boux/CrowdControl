@@ -25,6 +25,40 @@ export default {
       const n = this.seats.length + 1
       this.newSeatId = this.host.addSeat(`Seat ${n}`, "#3498db")
     },
+    exportSession() {
+      const data = {
+        name: this.session.name,
+        seats: this.seats.map(s => ({
+          id: s.id, name: s.name, color: s.color,
+          aspectW: s.aspectW, aspectH: s.aspectH,
+          controls: s.controls.map(c => ({ ...c, value: undefined, valueY: undefined }))
+        }))
+      }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+      const a = document.createElement("a")
+      a.href = URL.createObjectURL(blob)
+      a.download = `${this.session.name.replace(/[^a-z0-9]+/gi, "_")}.json`
+      a.click()
+      URL.revokeObjectURL(a.href)
+    },
+    importSession() {
+      const input = document.createElement("input")
+      input.type = "file"
+      input.accept = ".json"
+      input.onchange = () => {
+        const file = input.files[0]
+        if (!file) return
+        const reader = new FileReader()
+        reader.onload = () => {
+          const data = JSON.parse(reader.result)
+          if (!data.seats) return alert("Invalid session file")
+          this.host.session.seats = data.seats
+          this.host.syncSession()
+        }
+        reader.readAsText(file)
+      }
+      input.click()
+    },
     endSession() {
       this.host.disconnectRelay()
       this.$router.push("/")
@@ -53,7 +87,11 @@ export default {
     <div class='seats-section'>
       <div class='section-header'>
         <h2>Seats ({{ seats.length }})</h2>
-        <button class='add' @click='addSeat'>+ Add Seat</button>
+        <div class='section-actions'>
+          <button class='secondary' @click='importSession'>Import</button>
+          <button class='secondary' @click='exportSession'>Export</button>
+          <button class='add' @click='addSeat'>+ Add Seat</button>
+        </div>
       </div>
 
       <div class='seats-grid'>
@@ -125,6 +163,23 @@ header
   h2
     font-size: 1.25rem
     margin: 0
+
+.section-actions
+  display: flex
+  gap: 0.5rem
+
+.secondary
+  padding: 0.5rem 1rem
+  background: transparent
+  border: 1px solid #333
+  border-radius: 6px
+  color: #888
+  cursor: pointer
+  font-size: 0.8rem
+
+  &:hover
+    border-color: #4a9eff
+    color: #4a9eff
 
 .add
   padding: 0.5rem 1rem

@@ -5,6 +5,14 @@ export function attachRelay(httpServer) {
   const io = new Server(httpServer, { cors: { origin: "*" } })
   const sessions = new Map()
 
+  function updateControlValue(session, data) {
+    const seat = session.seats.find(s => s.id === data.seatId)
+    const control = seat?.controls?.find(c => c.id === data.controlId)
+    if (!control) return
+    control.value = data.value
+    if (data.valueY !== undefined) control.valueY = data.valueY
+  }
+
   io.on("connection", (socket) => {
     console.log("Connected:", socket.id)
 
@@ -76,6 +84,7 @@ export function attachRelay(httpServer) {
       const session = sessions.get(data.sessionId)
       if (!session) return
 
+      updateControlValue(session, data)
       io.to(`host:${data.sessionId}`).emit("control:change", {
         seatId: data.seatId,
         controlId: data.controlId,
@@ -88,6 +97,7 @@ export function attachRelay(httpServer) {
       const session = sessions.get(data.sessionId)
       if (!session || session.hostSocketId !== socket.id) return
 
+      updateControlValue(session, data)
       socket.to(`session:${data.sessionId}`).emit("control:change", {
         seatId: data.seatId,
         controlId: data.controlId,

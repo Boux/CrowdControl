@@ -45,11 +45,11 @@ export default {
     <div v-if='loading' class='center'>Connecting...</div>
     <div v-else-if='error' class='center'>
       <p class='error'>{{ error }}</p>
-      <router-link to='/' class='back-btn'>Back to Home</router-link>
+      <IconButton to='/' class='back-btn'>Back to Home</IconButton>
     </div>
     <template v-else>
       <header>
-        <router-link to='/' class='leave'>&larr; Leave</router-link>
+        <IconButton icon='arrow-left' to='/' class='leave'>Leave</IconButton>
         <div>
           <h1>{{ session.session?.name }}</h1>
           <p class='code'>{{ session.session?.id }}</p>
@@ -58,7 +58,7 @@ export default {
 
       <h2>Choose a Seat</h2>
 
-      <button v-if='availableSeats.length' class='random-btn' @click='takeRandom'>Random Seat</button>
+      <IconButton v-if='availableSeats.length' class='random-btn' @click='takeRandom'>Random Seat</IconButton>
 
       <div class='seats'>
         <div

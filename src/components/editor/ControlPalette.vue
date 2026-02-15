@@ -4,10 +4,10 @@ export default {
   emits: ["add"],
   data: () => ({
     types: [
-      { type: "xy-pad", label: "XY Pad", icon: "+" },
-      { type: "fader", label: "Fader", icon: "|" },
-      { type: "button", label: "Button", icon: "o" },
-      { type: "toggle", label: "Toggle", icon: "-" }
+      { type: "xy-pad", label: "XY Pad", icon: "move" },
+      { type: "fader", label: "Fader", icon: "sliders-vertical" },
+      { type: "button", label: "Button", icon: "circle" },
+      { type: "toggle", label: "Toggle", icon: "toggle-left" }
     ]
   })
 }
@@ -17,10 +17,9 @@ export default {
   <div class='palette'>
     <h3>Add Control</h3>
     <div class='items'>
-      <button v-for='t in types' :key='t.type' @click='$emit("add", t.type)'>
-        <span class='icon'>{{ t.icon }}</span>
+      <IconButton v-for='t in types' :key='t.type' :icon='t.icon' :icon-size='20' @click='$emit("add", t.type)'>
         <span class='label'>{{ t.label }}</span>
-      </button>
+      </IconButton>
     </div>
   </div>
 </template>
@@ -56,9 +55,6 @@ export default {
     &:hover
       border-color: #4a9eff
       background: rgba(74, 158, 255, 0.1)
-
-    .icon
-      font-size: 1.25rem
 
     .label
       font-size: 0.75rem

@@ -46,7 +46,7 @@ export default {
 <template>
   <div class='seat-view'>
     <header v-if='seat' :style='{ borderColor: seat.color }'>
-      <button class='back' @click='leave'>&larr;</button>
+      <IconButton icon='arrow-left' class='back' @click='leave' />
       <div class='badge' :style='{ background: seat.color }'>{{ seat.name }}</div>
     </header>
 

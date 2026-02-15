@@ -41,7 +41,7 @@ export default {
       <span class='type'>{{ typeLabel }}</span>
       <span class='label'>{{ control.label }}</span>
       <span class='address'>{{ control.oscAddress }}</span>
-      <span class='toggle'>{{ expanded ? "-" : "+" }}</span>
+      <span class='toggle'><Icon :name='expanded ? "chevron-up" : "chevron-down"' :size='16' /></span>
     </div>
 
     <div v-if='expanded' class='form'>
@@ -86,9 +86,9 @@ export default {
       </div>
 
       <div class='actions'>
-        <button class='save' @click='save'>Save</button>
-        <button class='cancel' @click='cancel'>Cancel</button>
-        <button class='delete' @click='$emit("delete")'>Delete</button>
+        <IconButton class='save' @click='save'>Save</IconButton>
+        <IconButton class='cancel' @click='cancel'>Cancel</IconButton>
+        <IconButton class='delete' @click='$emit("delete")'>Delete</IconButton>
       </div>
     </div>
   </div>

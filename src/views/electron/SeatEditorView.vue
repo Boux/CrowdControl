@@ -380,7 +380,7 @@ export default {
 <template>
   <div class='editor'>
     <header>
-      <button class='back' @click='back'>&larr; Back</button>
+      <IconButton icon='arrow-left' class='back' @click='back'>Back</IconButton>
       <label class='color-pick' :style='{ background: seat?.color }'>
         <input type='color' :value='seat?.color' @input='recolor' />
       </label>
@@ -498,17 +498,17 @@ export default {
           </table>
 
           <div class='control-actions'>
-            <button class='duplicate' @click='duplicateControl'>Duplicate</button>
-            <button class='delete' @click='deleteControl'>Delete</button>
+            <IconButton class='duplicate' @click='duplicateControl'>Duplicate</IconButton>
+            <IconButton class='delete' @click='deleteControl'>Delete</IconButton>
           </div>
         </template>
         <div v-else class='seat-settings'>
           <h3>Canvas Size</h3>
           <div class='presets'>
-            <button :class='{ active: aspectW === 9 && aspectH === 19.5 }' @click='setAspect(9, 19.5)'>Phone</button>
-            <button :class='{ active: aspectW === 9 && aspectH === 16 }' @click='setAspect(9, 16)'>Wide</button>
-            <button :class='{ active: aspectW === 3 && aspectH === 4 }' @click='setAspect(3, 4)'>Tablet</button>
-            <button :class='{ active: aspectW === 1 && aspectH === 1 }' @click='setAspect(1, 1)'>Square</button>
+            <IconButton :class='{ active: aspectW === 9 && aspectH === 19.5 }' @click='setAspect(9, 19.5)'>Phone</IconButton>
+            <IconButton :class='{ active: aspectW === 9 && aspectH === 16 }' @click='setAspect(9, 16)'>Wide</IconButton>
+            <IconButton :class='{ active: aspectW === 3 && aspectH === 4 }' @click='setAspect(3, 4)'>Tablet</IconButton>
+            <IconButton :class='{ active: aspectW === 1 && aspectH === 1 }' @click='setAspect(1, 1)'>Square</IconButton>
           </div>
           <table>
             <tr>

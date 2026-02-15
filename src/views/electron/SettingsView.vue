@@ -38,7 +38,7 @@ export default {
 <template>
   <div class='settings'>
     <header>
-      <router-link :to='backRoute' class='back'>&larr; Back</router-link>
+      <IconButton icon='arrow-left' :to='backRoute' class='back'>Back</IconButton>
       <h1>Settings</h1>
     </header>
 
@@ -81,7 +81,7 @@ export default {
               <option value=''>Disabled</option>
               <option v-for='d in midiOutputs' :key='d' :value='d'>{{ d }}</option>
             </select>
-            <button type='button' class='refresh' @click='refreshMidiOutputs'>&#x21bb;</button>
+            <IconButton icon='refresh-cw' :icon-size='14' class='refresh' @click='refreshMidiOutputs' />
           </div>
         </td>
       </tr>

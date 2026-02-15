@@ -71,17 +71,17 @@ export default {
     <div v-if='scanning' class='scanner'>
       <video ref='video'></video>
       <p v-if='scanError' class='scan-error'>{{ scanError }}</p>
-      <button class='cancel' @click='stopScan'>Cancel</button>
+      <IconButton class='cancel' @click='stopScan'>Cancel</IconButton>
     </div>
 
     <template v-else>
-      <button class='scan-btn' @click='startScan' :disabled='!relay.connected'>Scan QR Code</button>
+      <IconButton class='scan-btn' @click='startScan' :disabled='!relay.connected'>Scan QR Code</IconButton>
 
       <div class='divider'><span>or enter code</span></div>
 
       <div class='join-form'>
         <input v-model='sessionCode' type='text' placeholder='Session code' @keyup.enter='join()' />
-        <button @click='join()' :disabled='!relay.connected || connecting'>Join</button>
+        <IconButton @click='join()' :disabled='!relay.connected || connecting'>Join</IconButton>
       </div>
     </template>
   </div>

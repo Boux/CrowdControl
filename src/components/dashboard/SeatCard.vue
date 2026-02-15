@@ -96,14 +96,14 @@ export default {
 
     <div v-if='confirmDelete' class='seat-actions confirm'>
       <span>Delete?</span>
-      <button class='delete' @click='deleteSeat'>Yes</button>
-      <button @click='cancelDelete'>No</button>
+      <IconButton class='delete' @click='deleteSeat'>Yes</IconButton>
+      <IconButton @click='cancelDelete'>No</IconButton>
     </div>
     <div v-else class='seat-actions'>
-      <button v-if='seat.occupiedBy' class='kick' @click='kick'>Kick</button>
-      <button @click='duplicate'>Duplicate</button>
-      <button @click='edit'>Edit</button>
-      <button class='delete' @click='deleteSeat'>Delete</button>
+      <IconButton v-if='seat.occupiedBy' class='kick' @click='kick'>Kick</IconButton>
+      <IconButton @click='duplicate'>Duplicate</IconButton>
+      <IconButton @click='edit'>Edit</IconButton>
+      <IconButton class='delete' @click='deleteSeat'>Delete</IconButton>
     </div>
   </div>
 </template>

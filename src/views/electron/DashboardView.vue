@@ -116,7 +116,7 @@ export default {
   <div v-if='restoring' class='restoring'>Restoring session...</div>
   <div v-else class='dashboard'>
     <header>
-      <button class='end' @click='endSession'>&larr; End Session</button>
+      <IconButton icon='arrow-left' class='end' @click='endSession'>End Session</IconButton>
       <div>
         <h1>{{ session?.name }}</h1>
         <p class='osc'>
@@ -134,13 +134,13 @@ export default {
       <div class='section-header'>
         <h2>Seats ({{ seats.length }})</h2>
         <div class='section-actions'>
-          <button class='add' @click='addSeat'>+ Add Seat</button>
+          <IconButton icon='plus' class='add' @click='addSeat'>Add Seat</IconButton>
           <div class='menu-wrap' ref='menuWrap'>
-            <button class='menu-btn' @click='menuOpen = !menuOpen'>&vellip;</button>
+            <IconButton icon='ellipsis-vertical' class='menu-btn' @click='menuOpen = !menuOpen' />
             <div v-if='menuOpen' class='menu-dropdown'>
-              <button @click='importSession(); menuOpen = false'>Import</button>
-              <button @click='exportSession(); menuOpen = false'>Export</button>
-              <button @click='resendAll'>Resend All OSC/MIDI</button>
+              <IconButton @click='importSession(); menuOpen = false'>Import</IconButton>
+              <IconButton @click='exportSession(); menuOpen = false'>Export</IconButton>
+              <IconButton @click='resendAll'>Resend All OSC/MIDI</IconButton>
             </div>
           </div>
         </div>

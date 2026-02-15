@@ -50,8 +50,6 @@ ipcMain.handle("relay:disconnect", () => disconnectFromRelay())
 
 ipcMain.handle("session:create", async (_, data) => createSession(data))
 
-ipcMain.handle("session:close", () => closeSession())
-
 ipcMain.handle("session:update", (_, data) => updateSession(data))
 
 ipcMain.handle("session:kick", (_, data) => kickFromSeat(data))

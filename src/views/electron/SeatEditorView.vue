@@ -18,7 +18,8 @@ export default {
   components: { ControlPalette, XYPad, Fader, OscButton, Toggle },
   data: () => ({
     name: "",
-    selectedId: null,
+    selectedIds: [],
+    boxSelect: null,
     dragPending: null,
     dragging: null,
     resizing: null,
@@ -32,6 +33,7 @@ export default {
     seatId() { return this.$route.params.seatId },
     seat() { return this.host.seats.find(s => s.id === this.seatId) },
     controls() { return this.seat?.controls || [] },
+    selectedId() { return this.selectedIds[this.selectedIds.length - 1] || null },
     selectedControl() { return this.controls.find(c => c.id === this.selectedId) },
     showMinMax() { return ["xy-pad", "fader"].includes(this.selectedControl?.type) },
     showOrientation() { return this.selectedControl?.type === "fader" },
@@ -42,6 +44,31 @@ export default {
       const style = { aspectRatio: `${this.aspectW} / ${this.aspectH}`, height: `min(100cqh, calc(100cqw * ${this.aspectH} / ${this.aspectW}))` }
       if (this.seat?.color) style["--accent"] = this.seat.color
       return style
+    },
+    selectionBounds() {
+      if (this.selectedIds.length < 2) return null
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+      for (const id of this.selectedIds) {
+        const c = this.controls.find(ctrl => ctrl.id === id)
+        if (!c) continue
+        const d = layoutDefaults[c.type]
+        minX = Math.min(minX, c.x ?? d.x)
+        minY = Math.min(minY, c.y ?? d.y)
+        maxX = Math.max(maxX, (c.x ?? d.x) + (c.w ?? d.w))
+        maxY = Math.max(maxY, (c.y ?? d.y) + (c.h ?? d.h))
+      }
+      if (minX === Infinity) return null
+      return { x: minX, y: minY, w: maxX - minX, h: maxY - minY }
+    },
+    boxSelectStyle() {
+      if (!this.boxSelect) return null
+      const b = this.boxSelect
+      return {
+        left: Math.min(b.startX, b.currentX) + "%",
+        top: Math.min(b.startY, b.currentY) + "%",
+        width: Math.abs(b.currentX - b.startX) + "%",
+        height: Math.abs(b.currentY - b.startY) + "%"
+      }
     }
   },
   watch: {
@@ -90,7 +117,8 @@ export default {
       this._editSnapshotSaved = true
       const parsed = JSON.parse(snapshot)
       this.seat.controls.splice(0, this.seat.controls.length, ...parsed)
-      if (this.selectedId && !parsed.find(c => c.id === this.selectedId)) this.selectedId = null
+      const ids = new Set(parsed.map(c => c.id))
+      this.selectedIds = this.selectedIds.filter(id => ids.has(id))
       this.host.syncSession()
     },
     undo() {
@@ -144,7 +172,7 @@ export default {
         "button": { label: "Button", oscAddress: `/${baseName}/button${count}`, onValue: 1, offValue: 0 },
         "toggle": { label: "Toggle", oscAddress: `/${baseName}/toggle${count}`, onValue: 1, offValue: 0, value: 0 }
       }
-      this.selectedId = this.host.addControl(this.seatId, { type, ...defaults[type], ...layoutDefaults[type], ...midi })
+      this.selectedIds = [this.host.addControl(this.seatId, { type, ...defaults[type], ...layoutDefaults[type], ...midi })]
     },
     onKeydown(e) {
       const mod = e.ctrlKey || e.metaKey
@@ -155,13 +183,9 @@ export default {
       if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return
       if (e.key === "Delete" || e.key === "Backspace") this.deleteControl()
     },
-    duplicateControl() {
-      this.pushHistory()
-      if (!this.selectedControl) return
-      const src = this.selectedControl
+    cloneControl(src) {
       const copy = JSON.parse(JSON.stringify(src))
       delete copy.id
-      // unique OSC address
       if (copy.oscAddress) {
         const used = new Set()
         for (const s of this.host.seats)
@@ -173,7 +197,6 @@ export default {
           if (!used.has(addr)) { copy.oscAddress = addr; break }
         }
       }
-      // unique MIDI
       const slot = this.nextMidiSlot()
       copy.midiChannel = slot.ch
       copy.midiCC = slot.cc
@@ -181,18 +204,30 @@ export default {
         const slotY = this.nextMidiSlot([`${slot.ch}:${slot.cc}`])
         copy.midiCCY = slotY.cc
       }
-      // offset position slightly
+      return copy
+    },
+    duplicateControl() {
+      this.pushHistory()
+      if (!this.selectedControl) return
+      const copy = this.cloneControl(this.selectedControl)
       const d = layoutDefaults[copy.type]
       copy.x = Math.min(100 - (copy.w ?? d.w), (copy.x ?? d.x) + 3)
       copy.y = Math.min(100 - (copy.h ?? d.h), (copy.y ?? d.y) + 3)
-      this.selectedId = this.host.addControl(this.seatId, copy)
+      this.selectedIds = [this.host.addControl(this.seatId, copy)]
+    },
+    duplicateSelected() {
+      const sources = this.selectedIds.map(id => this.controls.find(c => c.id === id)).filter(Boolean)
+      const newIds = []
+      for (const src of sources) newIds.push(this.host.addControl(this.seatId, this.cloneControl(src)))
+      this.selectedIds = newIds
+      return newIds
     },
     deleteControl() {
+      if (!this.selectedIds.length) return
       this.pushHistory()
-      if (!this.selectedControl) return
-      const id = this.selectedId
-      this.selectedId = null
-      this.host.deleteControl(this.seatId, id)
+      const ids = [...this.selectedIds]
+      this.selectedIds = []
+      for (const id of ids) this.host.deleteControl(this.seatId, id)
     },
     back() {
       this.$router.push("/dashboard")
@@ -208,8 +243,55 @@ export default {
         zIndex: i
       }
     },
-    clearSelection() {
-      this.selectedId = null
+    // Box select
+    onCanvasMousedown(e) {
+      const canvas = this.$refs.canvas
+      const rect = canvas.getBoundingClientRect()
+      this.boxSelect = {
+        startX: ((e.clientX - rect.left) / rect.width) * 100,
+        startY: ((e.clientY - rect.top) / rect.height) * 100,
+        currentX: ((e.clientX - rect.left) / rect.width) * 100,
+        currentY: ((e.clientY - rect.top) / rect.height) * 100,
+        shiftHeld: e.shiftKey || e.ctrlKey || e.metaKey
+      }
+      document.addEventListener("mousemove", this.onBoxSelectMove)
+      document.addEventListener("mouseup", this.onBoxSelectEnd)
+    },
+    onBoxSelectMove(e) {
+      if (!this.boxSelect) return
+      const canvas = this.$refs.canvas
+      const rect = canvas.getBoundingClientRect()
+      this.boxSelect.currentX = ((e.clientX - rect.left) / rect.width) * 100
+      this.boxSelect.currentY = ((e.clientY - rect.top) / rect.height) * 100
+    },
+    onBoxSelectEnd() {
+      document.removeEventListener("mousemove", this.onBoxSelectMove)
+      document.removeEventListener("mouseup", this.onBoxSelectEnd)
+      if (!this.boxSelect) return
+      const b = this.boxSelect
+      const bx = Math.min(b.startX, b.currentX)
+      const by = Math.min(b.startY, b.currentY)
+      const bw = Math.abs(b.currentX - b.startX)
+      const bh = Math.abs(b.currentY - b.startY)
+      if (bw < 1 && bh < 1) {
+        if (!b.shiftHeld) this.selectedIds = []
+        this.boxSelect = null
+        return
+      }
+      const hit = []
+      for (const c of this.controls) {
+        const d = layoutDefaults[c.type]
+        const cx = c.x ?? d.x, cy = c.y ?? d.y, cw = c.w ?? d.w, ch = c.h ?? d.h
+        if (cx < bx + bw && cx + cw > bx && cy < by + bh && cy + ch > by) hit.push(c.id)
+      }
+      if (b.shiftHeld) {
+        const existing = new Set(this.selectedIds)
+        hit.forEach(id => existing.add(id))
+        this.selectedIds = [...existing]
+      } else {
+        this.selectedIds = hit
+      }
+      this.boxSelect = null
     },
 
     // Snap
@@ -237,12 +319,20 @@ export default {
     startDrag(c, e) {
       e.preventDefault()
       e.stopPropagation()
-      this.selectedId = c.id
+      const mod = e.shiftKey || e.ctrlKey || e.metaKey
+      const wasSelected = this.selectedIds.includes(c.id)
+      if (mod) {
+        if (!wasSelected) this.selectedIds = [...this.selectedIds, c.id]
+      } else if (!wasSelected) {
+        this.selectedIds = [c.id]
+      }
       this.dragPending = {
         control: c,
         startMouseX: e.clientX,
         startMouseY: e.clientY,
-        ctrlHeld: e.ctrlKey || e.metaKey
+        ctrlHeld: e.ctrlKey || e.metaKey,
+        mod,
+        wasSelected
       }
       document.addEventListener("mousemove", this.onDragMove)
       document.addEventListener("mouseup", this.onDragEnd)
@@ -252,14 +342,24 @@ export default {
       this.pushHistory()
       let c = p.control
       if (p.ctrlHeld) {
-        this.duplicateControl()
-        c = this.controls.find(ctrl => ctrl.id === this.selectedId)
+        const origIndex = this.selectedIds.indexOf(p.control.id)
+        const newIds = this.duplicateSelected()
+        if (!newIds.length) { this.dragPending = null; return }
+        c = this.controls.find(ctrl => ctrl.id === newIds[origIndex >= 0 ? origIndex : 0])
         if (!c) { this.dragPending = null; return }
       }
       const canvas = this.$refs.canvas
       const rect = canvas.getBoundingClientRect()
+      const others = []
+      for (const id of this.selectedIds) {
+        const ctrl = this.controls.find(ct => ct.id === id)
+        if (!ctrl || ctrl.id === c.id) continue
+        const d = layoutDefaults[ctrl.type]
+        others.push({ control: ctrl, startX: ctrl.x ?? d.x, startY: ctrl.y ?? d.y })
+      }
       this.dragging = {
         control: c,
+        others,
         startMouseX: p.startMouseX,
         startMouseY: p.startMouseY,
         startX: c.x ?? layoutDefaults[c.type].x,
@@ -271,43 +371,73 @@ export default {
     },
     onDragMove(e) {
       if (this.dragPending && !this.dragging) {
-        const dx = e.clientX - this.dragPending.startMouseX
-        const dy = e.clientY - this.dragPending.startMouseY
-        if (dx * dx + dy * dy < 25) return
+        const px = e.clientX - this.dragPending.startMouseX
+        const py = e.clientY - this.dragPending.startMouseY
+        if (px * px + py * py < 25) return
         this.commitDrag()
       }
       if (!this.dragging) return
       const d = this.dragging
-      const dx = ((e.clientX - d.startMouseX) / d.canvasW) * 100
-      const dy = ((e.clientY - d.startMouseY) / d.canvasH) * 100
+      const rawDx = ((e.clientX - d.startMouseX) / d.canvasW) * 100
+      const rawDy = ((e.clientY - d.startMouseY) / d.canvasH) * 100
+
+      // Constrain delta so no selected control leaves canvas
+      const all = [{ startX: d.startX, startY: d.startY, control: d.control }, ...d.others]
+      let minDx = -Infinity, maxDx = Infinity, minDy = -Infinity, maxDy = Infinity
+      for (const item of all) {
+        const w = item.control.w ?? layoutDefaults[item.control.type].w
+        const h = item.control.h ?? layoutDefaults[item.control.type].h
+        minDx = Math.max(minDx, -item.startX)
+        maxDx = Math.min(maxDx, 100 - w - item.startX)
+        minDy = Math.max(minDy, -item.startY)
+        maxDy = Math.min(maxDy, 100 - h - item.startY)
+      }
+      let dx = Math.max(minDx, Math.min(maxDx, rawDx))
+      let dy = Math.max(minDy, Math.min(maxDy, rawDy))
+
+      // Snap primary control, exclude all selected
       const w = d.control.w ?? layoutDefaults[d.control.type].w
       const h = d.control.h ?? layoutDefaults[d.control.type].h
-      let x = Math.max(0, Math.min(100 - w, d.startX + dx))
-      let y = Math.max(0, Math.min(100 - h, d.startY + dy))
       if (!e.shiftKey) {
-        const edges = this.getSnapEdges(d.control.id)
+        const excludeIds = new Set(this.selectedIds)
+        const edges = { x: [0, 100], y: [0, 100] }
+        for (const c of this.controls) {
+          if (excludeIds.has(c.id)) continue
+          const def = layoutDefaults[c.type]
+          edges.x.push((c.x ?? def.x), (c.x ?? def.x) + (c.w ?? def.w))
+          edges.y.push((c.y ?? def.y), (c.y ?? def.y) + (c.h ?? def.h))
+        }
         const th = 2
         const guides = []
+        const x = d.startX + dx, y = d.startY + dy
         const sL = this.snapValue(x, edges.x, th)
         const sR = this.snapValue(x + w, edges.x, th)
         const sT = this.snapValue(y, edges.y, th)
         const sB = this.snapValue(y + h, edges.y, th)
         if (sL !== null && (sR === null || Math.abs(sL - x) <= Math.abs(sR - (x + w)))) {
-          x = sL; guides.push({ axis: "x", pos: sL })
+          dx = sL - d.startX; guides.push({ axis: "x", pos: sL })
         } else if (sR !== null) {
-          x = sR - w; guides.push({ axis: "x", pos: sR })
+          dx = sR - w - d.startX; guides.push({ axis: "x", pos: sR })
         }
         if (sT !== null && (sB === null || Math.abs(sT - y) <= Math.abs(sB - (y + h)))) {
-          y = sT; guides.push({ axis: "y", pos: sT })
+          dy = sT - d.startY; guides.push({ axis: "y", pos: sT })
         } else if (sB !== null) {
-          y = sB - h; guides.push({ axis: "y", pos: sB })
+          dy = sB - h - d.startY; guides.push({ axis: "y", pos: sB })
         }
+        dx = Math.max(minDx, Math.min(maxDx, dx))
+        dy = Math.max(minDy, Math.min(maxDy, dy))
         this.guides = guides
       } else {
         this.guides = []
       }
-      d.control.x = x
-      d.control.y = y
+
+      // Apply delta to all selected
+      d.control.x = d.startX + dx
+      d.control.y = d.startY + dy
+      for (const o of d.others) {
+        o.control.x = o.startX + dx
+        o.control.y = o.startY + dy
+      }
     },
     onDragEnd() {
       document.removeEventListener("mousemove", this.onDragMove)
@@ -316,11 +446,18 @@ export default {
         this.dragging = null
         this.guides = []
         this.host.syncSession()
+      } else if (this.dragPending) {
+        const p = this.dragPending
+        if (p.mod && p.wasSelected) {
+          this.selectedIds = this.selectedIds.filter(id => id !== p.control.id)
+        } else if (!p.mod) {
+          this.selectedIds = [p.control.id]
+        }
       }
       this.dragPending = null
     },
 
-    // Resize
+    // Resize (single)
     startResize(c, handle, e) {
       e.preventDefault()
       e.stopPropagation()
@@ -343,8 +480,75 @@ export default {
       document.addEventListener("mousemove", this.onResizeMove)
       document.addEventListener("mouseup", this.onResizeEnd)
     },
+    // Resize (group)
+    startGroupResize(handle, e) {
+      e.preventDefault()
+      e.stopPropagation()
+      this.pushHistory()
+      const canvas = this.$refs.canvas
+      const rect = canvas.getBoundingClientRect()
+      const bounds = this.selectionBounds
+      const items = []
+      for (const id of this.selectedIds) {
+        const c = this.controls.find(ctrl => ctrl.id === id)
+        if (!c) continue
+        const d = layoutDefaults[c.type]
+        items.push({ control: c, startX: c.x ?? d.x, startY: c.y ?? d.y, startW: c.w ?? d.w, startH: c.h ?? d.h })
+      }
+      this.resizing = {
+        group: true, handle, items,
+        startMouseX: e.clientX, startMouseY: e.clientY,
+        boundsX: bounds.x, boundsY: bounds.y, boundsW: bounds.w, boundsH: bounds.h,
+        canvasW: rect.width, canvasH: rect.height
+      }
+      document.addEventListener("mousemove", this.onResizeMove)
+      document.addEventListener("mouseup", this.onResizeEnd)
+    },
+    onGroupResizeMove(e) {
+      const r = this.resizing
+      const dx = ((e.clientX - r.startMouseX) / r.canvasW) * 100
+      const dy = ((e.clientY - r.startMouseY) / r.canvasH) * 100
+      let newX = r.boundsX, newY = r.boundsY, newW = r.boundsW, newH = r.boundsH
+
+      if (r.handle === "se") {
+        newW = r.boundsW + dx
+        newH = r.boundsH + dy
+      } else if (r.handle === "sw") {
+        const right = r.boundsX + r.boundsW
+        newX = r.boundsX + dx
+        newW = right - newX
+        newH = r.boundsH + dy
+      } else if (r.handle === "ne") {
+        newW = r.boundsW + dx
+        const bottom = r.boundsY + r.boundsH
+        newY = r.boundsY + dy
+        newH = bottom - newY
+      } else if (r.handle === "nw") {
+        const right = r.boundsX + r.boundsW
+        newX = r.boundsX + dx
+        newW = right - newX
+        const bottom = r.boundsY + r.boundsH
+        newY = r.boundsY + dy
+        newH = bottom - newY
+      }
+
+      newW = Math.max(10, newW)
+      newH = Math.max(5, newH)
+      newX = Math.max(0, Math.min(100 - newW, newX))
+      newY = Math.max(0, Math.min(100 - newH, newY))
+
+      const scaleX = newW / r.boundsW
+      const scaleY = newH / r.boundsH
+      for (const item of r.items) {
+        item.control.x = newX + (item.startX - r.boundsX) * scaleX
+        item.control.y = newY + (item.startY - r.boundsY) * scaleY
+        item.control.w = item.startW * scaleX
+        item.control.h = item.startH * scaleY
+      }
+    },
     onResizeMove(e) {
       if (!this.resizing) return
+      if (this.resizing.group) return this.onGroupResizeMove(e)
       const r = this.resizing
       const c = r.control
       const dx = ((e.clientX - r.startMouseX) / r.canvasW) * 100
@@ -414,12 +618,12 @@ export default {
 
     <div class='layout'>
       <div class='canvas-wrap'>
-        <div ref='canvas' class='canvas' :style='canvasStyle' @click='clearSelection'>
+        <div ref='canvas' class='canvas' :style='canvasStyle' @mousedown='onCanvasMousedown'>
           <div
             v-for='(c, i) in controls'
             :key='c.id'
             class='canvas-control'
-            :class='{ selected: c.id === selectedId }'
+            :class='{ selected: selectedIds.includes(c.id) }'
             :style='controlStyle(c, i)'
             @mousedown='startDrag(c, $event)'
             @click.stop
@@ -430,20 +634,27 @@ export default {
               <OscButton v-else-if='c.type === "button"' :label='c.label' />
               <Toggle v-else-if='c.type === "toggle"' :label='c.label' :value='0' :on-value='c.onValue' :off-value='c.offValue' />
             </div>
-            <template v-if='c.id === selectedId'>
+            <template v-if='selectedIds.length === 1 && c.id === selectedId'>
               <div class='handle nw' @mousedown='startResize(c, "nw", $event)'></div>
               <div class='handle ne' @mousedown='startResize(c, "ne", $event)'></div>
               <div class='handle sw' @mousedown='startResize(c, "sw", $event)'></div>
               <div class='handle se' @mousedown='startResize(c, "se", $event)'></div>
             </template>
           </div>
+          <div v-if='selectionBounds' class='selection-bounds' :style='{ left: selectionBounds.x + "%", top: selectionBounds.y + "%", width: selectionBounds.w + "%", height: selectionBounds.h + "%" }'>
+            <div class='handle nw' @mousedown='startGroupResize("nw", $event)'></div>
+            <div class='handle ne' @mousedown='startGroupResize("ne", $event)'></div>
+            <div class='handle sw' @mousedown='startGroupResize("sw", $event)'></div>
+            <div class='handle se' @mousedown='startGroupResize("se", $event)'></div>
+          </div>
           <div v-for='(g, gi) in guides' :key='"guide-" + gi' class='guide' :class='g.axis' :style='g.axis === "x" ? { left: g.pos + "%" } : { top: g.pos + "%" }'></div>
+          <div v-if='boxSelectStyle' class='box-select' :style='boxSelectStyle'></div>
           <div v-if='!controls.length' class='empty'>Add controls above</div>
         </div>
       </div>
 
       <div class='settings'>
-        <template v-if='selectedControl'>
+        <template v-if='selectedControl && selectedIds.length === 1'>
           <h3>{{ { "xy-pad": "XY Pad", "fader": "Fader", "button": "Button", "toggle": "Toggle" }[selectedControl.type] }}</h3>
 
           <div class='section-label'>Layout</div>
@@ -628,6 +839,24 @@ header
   border: 2px solid #333
   border-radius: 24px
   overflow: hidden
+  user-select: none
+
+.selection-bounds
+  position: absolute
+  border: 1px dashed #4a9eff88
+  z-index: 101
+  box-sizing: border-box
+  pointer-events: none
+
+  .handle
+    pointer-events: auto
+
+.box-select
+  position: absolute
+  border: 1px dashed #4a9eff
+  background: rgba(74, 158, 255, 0.1)
+  z-index: 200
+  pointer-events: none
 
 .guide
   position: absolute

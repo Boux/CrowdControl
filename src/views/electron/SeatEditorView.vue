@@ -19,6 +19,7 @@ export default {
   data: () => ({
     name: "",
     selectedId: null,
+    dragPending: null,
     dragging: null,
     resizing: null,
     local: {},
@@ -207,10 +208,6 @@ export default {
         zIndex: i
       }
     },
-    selectControl(c, e) {
-      e.stopPropagation()
-      this.selectedId = c.id
-    },
     clearSelection() {
       this.selectedId = null
     },
@@ -240,29 +237,45 @@ export default {
     startDrag(c, e) {
       e.preventDefault()
       e.stopPropagation()
+      this.selectedId = c.id
+      this.dragPending = {
+        control: c,
+        startMouseX: e.clientX,
+        startMouseY: e.clientY,
+        ctrlHeld: e.ctrlKey || e.metaKey
+      }
+      document.addEventListener("mousemove", this.onDragMove)
+      document.addEventListener("mouseup", this.onDragEnd)
+    },
+    commitDrag() {
+      const p = this.dragPending
       this.pushHistory()
-      if (e.ctrlKey || e.metaKey) {
-        this.selectedId = c.id
+      let c = p.control
+      if (p.ctrlHeld) {
         this.duplicateControl()
         c = this.controls.find(ctrl => ctrl.id === this.selectedId)
-        if (!c) return
+        if (!c) { this.dragPending = null; return }
       }
-      this.selectedId = c.id
       const canvas = this.$refs.canvas
       const rect = canvas.getBoundingClientRect()
       this.dragging = {
         control: c,
-        startMouseX: e.clientX,
-        startMouseY: e.clientY,
+        startMouseX: p.startMouseX,
+        startMouseY: p.startMouseY,
         startX: c.x ?? layoutDefaults[c.type].x,
         startY: c.y ?? layoutDefaults[c.type].y,
         canvasW: rect.width,
         canvasH: rect.height
       }
-      document.addEventListener("mousemove", this.onDragMove)
-      document.addEventListener("mouseup", this.onDragEnd)
+      this.dragPending = null
     },
     onDragMove(e) {
+      if (this.dragPending && !this.dragging) {
+        const dx = e.clientX - this.dragPending.startMouseX
+        const dy = e.clientY - this.dragPending.startMouseY
+        if (dx * dx + dy * dy < 25) return
+        this.commitDrag()
+      }
       if (!this.dragging) return
       const d = this.dragging
       const dx = ((e.clientX - d.startMouseX) / d.canvasW) * 100
@@ -299,9 +312,12 @@ export default {
     onDragEnd() {
       document.removeEventListener("mousemove", this.onDragMove)
       document.removeEventListener("mouseup", this.onDragEnd)
-      this.dragging = null
-      this.guides = []
-      this.host.syncSession()
+      if (this.dragging) {
+        this.dragging = null
+        this.guides = []
+        this.host.syncSession()
+      }
+      this.dragPending = null
     },
 
     // Resize
@@ -406,7 +422,7 @@ export default {
             :class='{ selected: c.id === selectedId }'
             :style='controlStyle(c, i)'
             @mousedown='startDrag(c, $event)'
-            @click='selectControl(c, $event)'
+            @click.stop
           >
             <div class='control-inner'>
               <XYPad v-if='c.type === "xy-pad"' :label='c.label' :value-x='0.5' :value-y='0.5' :min='c.min' :max='c.max' />

@@ -1,15 +1,9 @@
 <script>
+import { controlStyle } from "../utils/layout.js"
 import XYPad from "./controls/XYPad.vue"
 import Fader from "./controls/Fader.vue"
 import OscButton from "./controls/OscButton.vue"
 import Toggle from "./controls/Toggle.vue"
-
-const layoutDefaults = {
-  "xy-pad": { x: 10, y: 30, w: 80, h: 40 },
-  "fader": { x: 35, y: 20, w: 30, h: 60 },
-  "button": { x: 30, y: 42, w: 40, h: 15 },
-  "toggle": { x: 30, y: 44, w: 40, h: 12 }
-}
 
 export default {
   name: "SeatCanvas",
@@ -20,17 +14,7 @@ export default {
   },
   emits: ["control"],
   methods: {
-    controlStyle(c, i) {
-      const d = layoutDefaults[c.type] || { x: 10, y: 10, w: 80, h: 20 }
-      return {
-        position: "absolute",
-        left: `${c.x ?? d.x}%`,
-        top: `${c.y ?? d.y}%`,
-        width: `${c.w ?? d.w}%`,
-        height: `${c.h ?? d.h}%`,
-        zIndex: i
-      }
-    },
+    controlStyle,
     onChange(c, value, valueY) {
       this.$emit("control", c, value, valueY)
     }

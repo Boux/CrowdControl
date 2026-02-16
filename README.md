@@ -1,3 +1,5 @@
+# --WORK IN PROGRESS - NOT READY--
+
 # Crowd Control
 
 Collaborative control surfaces for live events. Audience members join from their phones and get assigned interactive controls (faders, XY pads, buttons, toggles) that send OSC and MIDI to your setup.

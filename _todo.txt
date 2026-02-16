@@ -1,1 +1,2 @@
 - allow simple non-SSL hosting for simpler LAN + self-hosting
+- re-write README with node version 22 and yarn install

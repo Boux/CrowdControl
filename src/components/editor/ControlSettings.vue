@@ -8,6 +8,9 @@ export default {
   data: () => ({
     local: {}
   }),
+  created() {
+    this._skipLocalWatch = false
+  },
   computed: {
     showMinMax() { return ["xy-pad", "fader"].includes(this.control?.type) },
     showOrientation() { return this.control?.type === "fader" },

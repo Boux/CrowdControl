@@ -63,7 +63,7 @@ export default {
 </script>
 
 <template>
-  <div class='seat-card' :style='{ borderColor: seat.color }'>
+  <div class='seat-card' :style='seat.occupiedBy ? { borderColor: seat.color } : null'>
     <div class='seat-header' :style='{ background: seat.color + "22" }'>
       <label class='color' :style='{ background: seat.color }'>
         <input type='color' :value='seat.color' @input='recolor' />
@@ -113,7 +113,7 @@ export default {
   display: flex
   flex-direction: column
   background: #0d0d1a
-  border: 2px solid
+  border: 2px solid #1a1a2e
   border-radius: 10px
   overflow: hidden
 

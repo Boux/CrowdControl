@@ -43,7 +43,17 @@ export function attachRelay(httpServer) {
 
       if (data.name) session.name = data.name
       if (data.oscConfig) session.oscConfig = data.oscConfig
-      if (data.seats !== undefined) session.seats = data.seats
+      if (data.seats !== undefined) {
+        const occupied = new Map()
+        for (const s of session.seats)
+          if (s.occupiedBy) occupied.set(s.id, { occupiedBy: s.occupiedBy, lastHeartbeat: s.lastHeartbeat })
+        for (const s of data.seats) {
+          const prev = occupied.get(s.id)
+          if (prev) Object.assign(s, prev)
+          else { s.occupiedBy = null; delete s.lastHeartbeat }
+        }
+        session.seats = data.seats
+      }
 
       io.to(`session:${data.sessionId}`).emit("session:updated", { session })
     })

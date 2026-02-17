@@ -1,6 +1,7 @@
 <script>
 import { useHostStore } from "../../stores/host"
-import { layoutDefaults, controlBounds } from "../../utils/layout.js"
+import { controlBounds } from "../../utils/layout.js"
+import { collectUsedMidi, collectUsedAddresses, assignMidi, nextAddress, buildControl } from "../../utils/control.js"
 import CanvasEditor from "../../components/editor/CanvasEditor.vue"
 import ControlPalette from "../../components/editor/ControlPalette.vue"
 import ControlSettings from "../../components/editor/ControlSettings.vue"
@@ -86,36 +87,11 @@ export default {
       if (w < 1 || h < 1) return
       this.host.updateSeat(this.seatId, { aspectW: w, aspectH: h })
     },
-    nextMidiSlot(extra) {
-      const used = new Set()
-      for (const seat of this.host.seats)
-        for (const c of seat.controls) {
-          if (c.midiCC !== undefined) used.add(`${c.midiChannel || 0}:${c.midiCC}`)
-          if (c.midiCCY !== undefined) used.add(`${c.midiChannel || 0}:${c.midiCCY}`)
-        }
-      if (extra) extra.forEach(k => used.add(k))
-      for (let ch = 0; ch < 16; ch++)
-        for (let cc = 0; cc < 128; cc++)
-          if (!used.has(`${ch}:${cc}`)) return { ch, cc }
-      return { ch: 0, cc: 0 }
-    },
     addControl(type) {
       this.pushHistory()
-      const baseName = this.seat.name.toLowerCase().replace(/\s+/g, "_")
-      const count = this.controls.filter(c => c.type === type).length + 1
-      const slot = this.nextMidiSlot()
-      const midi = { midiChannel: slot.ch, midiCC: slot.cc }
-      if (type === "xy-pad") {
-        const slotY = this.nextMidiSlot([`${slot.ch}:${slot.cc}`])
-        midi.midiCCY = slotY.cc === slot.cc + 1 && slotY.ch === slot.ch ? slotY.cc : slotY.cc
-      }
-      const defaults = {
-        "xy-pad": { label: "XY Pad", oscAddress: `/${baseName}/xy${count}`, min: 0, max: 1, value: 0.5, valueY: 0.5 },
-        "fader": { label: "Fader", oscAddress: `/${baseName}/fader${count}`, min: 0, max: 1, value: 0, orientation: "vertical" },
-        "button": { label: "Button", oscAddress: `/${baseName}/button${count}`, onValue: 1, offValue: 0 },
-        "toggle": { label: "Toggle", oscAddress: `/${baseName}/toggle${count}`, onValue: 1, offValue: 0, value: 0 }
-      }
-      this.selectedIds = [this.host.addControl(this.seatId, { type, ...defaults[type], ...layoutDefaults[type], ...midi })]
+      const usedMidi = collectUsedMidi(this.host.seats)
+      const control = buildControl(type, this.seat.name, this.controls, usedMidi)
+      this.selectedIds = [this.host.addControl(this.seatId, control)]
     },
     onKeydown(e) {
       const mod = e.ctrlKey || e.metaKey
@@ -129,24 +105,10 @@ export default {
     cloneControl(src) {
       const copy = JSON.parse(JSON.stringify(src))
       delete copy.id
-      if (copy.oscAddress) {
-        const used = new Set()
-        for (const s of this.host.seats)
-          for (const c of s.controls)
-            if (c.oscAddress) used.add(c.oscAddress)
-        const base = copy.oscAddress.replace(/\d*$/, "")
-        for (let n = 2; ; n++) {
-          const addr = base + n
-          if (!used.has(addr)) { copy.oscAddress = addr; break }
-        }
-      }
-      const slot = this.nextMidiSlot()
-      copy.midiChannel = slot.ch
-      copy.midiCC = slot.cc
-      if (copy.midiCCY !== undefined) {
-        const slotY = this.nextMidiSlot([`${slot.ch}:${slot.cc}`])
-        copy.midiCCY = slotY.cc
-      }
+      const usedAddresses = collectUsedAddresses(this.host.seats)
+      if (copy.oscAddress) copy.oscAddress = nextAddress(copy.oscAddress, usedAddresses)
+      const usedMidi = collectUsedMidi(this.host.seats)
+      assignMidi(copy, usedMidi)
       return copy
     },
     duplicateControl() {

@@ -1,11 +1,8 @@
 import { defineStore } from "pinia"
 import { nanoid } from "nanoid"
+import { nameToSlug, collectUsedMidi, collectUsedAddresses, assignMidi, nextAddress } from "../utils/control.js"
 
 const api = window.electronAPI
-
-function nameToSlug(name) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")
-}
 
 const defaultSettings = {
   osc: { host: "127.0.0.1", port: 9000, protocol: "udp" },
@@ -107,30 +104,8 @@ export const useHostStore = defineStore("host", {
       copy.name = seat.name + " (copy)"
       copy.occupiedBy = null
 
-      const usedAddresses = new Set()
-      const usedMidi = new Set()
-      for (const s of this.session.seats)
-        for (const c of s.controls) {
-          if (c.oscAddress) usedAddresses.add(c.oscAddress)
-          if (c.midiCC !== undefined) usedMidi.add(`${c.midiChannel || 0}:${c.midiCC}`)
-          if (c.midiCCY !== undefined) usedMidi.add(`${c.midiChannel || 0}:${c.midiCCY}`)
-        }
-
-      const nextMidi = () => {
-        for (let ch = 0; ch < 16; ch++)
-          for (let cc = 0; cc < 128; cc++)
-            if (!usedMidi.has(`${ch}:${cc}`)) { usedMidi.add(`${ch}:${cc}`); return { ch, cc } }
-        return { ch: 0, cc: 0 }
-      }
-
-      const nextAddress = (base) => {
-        if (!usedAddresses.has(base)) { usedAddresses.add(base); return base }
-        for (let n = 2; ; n++) {
-          const addr = base.replace(/\d*$/, "") + n
-          if (!usedAddresses.has(addr)) { usedAddresses.add(addr); return addr }
-        }
-      }
-
+      const usedAddresses = collectUsedAddresses(this.session.seats)
+      const usedMidi = collectUsedMidi(this.session.seats)
       const oldSlug = nameToSlug(seat.name)
       const newSlug = nameToSlug(copy.name)
 
@@ -138,17 +113,8 @@ export const useHostStore = defineStore("host", {
         c.id = nanoid(8)
         if (c.oscAddress && oldSlug && newSlug && c.oscAddress.startsWith("/" + oldSlug + "/"))
           c.oscAddress = "/" + newSlug + c.oscAddress.slice(oldSlug.length + 1)
-        if (c.oscAddress) c.oscAddress = nextAddress(c.oscAddress)
-        if (c.midiCC !== undefined) {
-          const slot = nextMidi()
-          c.midiChannel = slot.ch
-          c.midiCC = slot.cc
-        }
-        if (c.midiCCY !== undefined) {
-          const slot = nextMidi()
-          c.midiCCY = slot.cc
-          if (c.midiChannel !== slot.ch) c.midiChannel = slot.ch
-        }
+        if (c.oscAddress) c.oscAddress = nextAddress(c.oscAddress, usedAddresses)
+        assignMidi(c, usedMidi)
       })
 
       this.session.seats.push(copy)

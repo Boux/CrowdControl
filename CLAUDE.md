@@ -30,34 +30,15 @@ CrowdControl/
 └── package.json
 ```
 
-## Docker
-
-All node/yarn/npm commands must be run through Docker:
-
-```bash
-docker compose run --rm node yarn <command>
-```
-
-Examples:
-```bash
-docker compose run --rm node yarn install
-docker compose run --rm node yarn build
-docker compose run --rm node yarn add <package>
-```
-
-Never run node, yarn, or npm directly on the host.
-
 ## Running
 
 ```bash
 # Dev (web app + relay on same server, port 5173)
-docker compose run --rm node yarn dev
+yarn dev
 
-# Production (build then serve on port 3001)
-docker compose run --rm node yarn build
-docker compose run --rm node yarn serve
+# Production is deployed to Railway (auto-builds from git)
 
-# Electron app (for hosts — requires host display, not dockerized)
+# Electron app (for hosts — local OSC/MIDI bridge)
 yarn electron
 ```
 

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "start": "node server/index.js",
     "electron": "NODE_ENV=development electron .",
     "electron:prod": "electron .",
     "electron:build": "vite build && electron-builder"

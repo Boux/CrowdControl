@@ -12,7 +12,7 @@ attachRelay(server)
 
 const distPath = join(__dirname, "..", "dist")
 app.use(express.static(distPath))
-app.get("*", (req, res) => res.sendFile(join(distPath, "index.html")))
+app.get("/{*path}", (req, res) => res.sendFile(join(distPath, "index.html")))
 
 const PORT = process.env.PORT || 3001
 server.listen(PORT, () => console.log(`Crowd Control server on port ${PORT}`))

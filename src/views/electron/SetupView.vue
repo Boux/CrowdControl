@@ -5,7 +5,6 @@ export default {
   name: "SetupView",
   data: () => ({
     sessionName: "",
-    connecting: false,
     recentKey: 0,
     confirmIndex: null
   }),
@@ -16,25 +15,10 @@ export default {
   },
   methods: {
     async start(restoreSeats) {
-      this.connecting = true
-
-      const relayUrl = await window.electronAPI.relay.getUrl()
-      const relayResult = await this.host.connectRelay(relayUrl)
-      if (!relayResult.success) {
-        alert("Failed to connect to relay: " + relayResult.error)
-        this.connecting = false
-        return
-      }
+      this.host.createSession(this.sessionName.trim())
 
       await this.host.connectOsc()
       if (this.host.settings.midi.device) await this.host.connectMidi()
-
-      const sessionResult = await this.host.createSession(this.sessionName.trim())
-      if (!sessionResult.success) {
-        alert("Failed to create session: " + sessionResult.error)
-        this.connecting = false
-        return
-      }
 
       if (Array.isArray(restoreSeats)) {
         this.host.session.seats = restoreSeats
@@ -85,8 +69,8 @@ export default {
         </div>
       </div>
 
-      <IconButton icon='play' type='submit' :disabled='!valid || connecting'>
-        {{ connecting ? "Starting..." : "Start Session" }}
+      <IconButton icon='play' type='submit' :disabled='!valid'>
+        Start Session
       </IconButton>
     </form>
 
@@ -100,7 +84,7 @@ export default {
           <span class='recent-meta'>{{ entry.seats?.length || 0 }} seats &middot; {{ timeAgo(entry.savedAt) }}</span>
         </div>
         <div class='recent-actions'>
-          <IconButton icon='folder-open' class='reopen' @click='reopen(entry)' :disabled='connecting'>Reopen</IconButton>
+          <IconButton icon='folder-open' class='reopen' @click='reopen(entry)'>Reopen</IconButton>
           <IconButton icon='x' class='remove' @click='askDelete(i)' />
         </div>
         <div v-if='confirmIndex === i' class='confirm-overlay'>

@@ -8,7 +8,7 @@ export default {
   components: { SeatCard, SessionQr },
   data: () => ({
     newSeatId: null,
-    restoring: false,
+    goingLive: false,
     menuOpen: false,
     logOpen: false
   }),
@@ -34,24 +34,13 @@ export default {
     document.removeEventListener("mousedown", this._onClickOutside)
   },
   async mounted() {
-    if (this.session) return
-    const saved = this.host.loadActiveSession()
-    if (!saved) return this.$router.push("/")
-
-    this.restoring = true
-    const relayUrl = await window.electronAPI.relay.getUrl()
-    const relayResult = await this.host.connectRelay(relayUrl)
-    if (!relayResult.success) { this.restoring = false; return this.$router.push("/") }
-
-    await this.host.connectOsc()
-    if (this.host.settings.midi.device) await this.host.connectMidi()
-
-    const sessionResult = await this.host.createSession(saved.name, saved.id)
-    if (!sessionResult.success) { this.restoring = false; return this.$router.push("/") }
-
-    this.host.session.seats = saved.seats
-    this.host.syncSession()
-    this.restoring = false
+    if (!this.session) {
+      const saved = this.host.loadActiveSession()
+      if (!saved) return this.$router.push("/")
+      this.host.session = { id: saved.id, name: saved.name, seats: saved.seats }
+    }
+    if (!this.host.oscConnected) await this.host.connectOsc()
+    if (this.host.settings.midi.device && !this.host.midiConnected) await this.host.connectMidi()
   },
   methods: {
     addSeat() {
@@ -105,7 +94,17 @@ export default {
           this.host.sendControlMidi(c, val, valY)
         }
     },
+    async goLive() {
+      this.goingLive = true
+      const result = await this.host.goLive()
+      this.goingLive = false
+      if (!result.success) alert("Failed to connect: " + (result.error || "Unknown error"))
+    },
+    goOffline() {
+      this.host.goOffline()
+    },
     endSession() {
+      if (this.host.live) this.host.goOffline()
       this.host.disconnectRelay()
       this.$router.push("/")
     }
@@ -114,8 +113,7 @@ export default {
 </script>
 
 <template>
-  <div v-if='restoring' class='restoring'>Restoring session...</div>
-  <div v-else class='dashboard'>
+  <div class='dashboard'>
     <div class='main'>
       <header>
         <IconButton icon='arrow-left' class='end' @click='endSession'>End Session</IconButton>
@@ -129,7 +127,11 @@ export default {
             <router-link to='/settings' class='settings-hint'>settings</router-link>
           </p>
         </div>
-        <SessionQr :url='sessionUrl' :code='session?.id' />
+        <SessionQr v-if='host.live' :url='sessionUrl' :code='session?.id' />
+        <IconButton v-if='host.live' icon='wifi-off' class='offline-btn' @click='goOffline'>Go Offline</IconButton>
+        <IconButton v-else icon='wifi' class='live-btn' @click='goLive' :disabled='goingLive'>
+          {{ goingLive ? "Connecting..." : "Go Live" }}
+        </IconButton>
       </header>
 
       <div class='seats-section'>
@@ -171,14 +173,6 @@ export default {
 </template>
 
 <style lang='sass' scoped>
-.restoring
-  display: flex
-  align-items: center
-  justify-content: center
-  height: 100vh
-  color: #888
-  font-size: 1.25rem
-
 .dashboard
   height: 100vh
   display: flex
@@ -212,6 +206,33 @@ header
   &:hover
     border-color: #e74c3c
     color: #e74c3c
+
+.live-btn
+  padding: 0.5rem 1rem
+  background: linear-gradient(135deg, #2ecc71, #27ae60)
+  border: none
+  border-radius: 6px
+  color: white
+  cursor: pointer
+  white-space: nowrap
+  margin-top: 0.25rem
+
+  &:disabled
+    opacity: 0.5
+
+.offline-btn
+  padding: 0.5rem 1rem
+  background: transparent
+  border: 1px solid #333
+  border-radius: 6px
+  color: #888
+  cursor: pointer
+  white-space: nowrap
+  margin-top: 0.25rem
+
+  &:hover
+    border-color: #e67e22
+    color: #e67e22
 
 .osc
   font-size: 0.75rem

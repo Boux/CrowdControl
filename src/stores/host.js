@@ -26,6 +26,7 @@ function loadSettings() {
 export const useHostStore = defineStore("host", {
   state: () => ({
     connected: false,
+    live: false,
     session: null,
     oscConnected: false,
     midiConnected: false,
@@ -56,21 +57,37 @@ export const useHostStore = defineStore("host", {
     disconnectRelay() {
       api.relay.disconnect()
       this.connected = false
+      this.live = false
       this.session = null
       localStorage.removeItem("crowdosc:active")
     },
 
-    async createSession(name, id) {
-      const payload = { name }
-      if (id) payload.id = id
-      const result = await api.session.create(payload)
-      console.log("createSession result:", result)
-      if (result.success) {
-        this.session = result.session
-        this.saveActiveSession()
-        this.saveToRecent()
-      }
-      return result
+    async goLive() {
+      const url = this.settings.relay.url
+      const relayResult = await this.connectRelay(url)
+      if (!relayResult.success) return relayResult
+
+      const result = await api.session.create({ id: this.session.id, name: this.session.name })
+      if (!result.success) return result
+
+      const seats = JSON.parse(JSON.stringify(this.session.seats))
+      api.session.update({ seats })
+
+      this.live = true
+      return { success: true }
+    },
+
+    goOffline() {
+      api.session.close()
+      api.relay.disconnect()
+      this.connected = false
+      this.live = false
+    },
+
+    createSession(name) {
+      this.session = { id: nanoid(8), name, seats: [] }
+      this.saveActiveSession()
+      this.saveToRecent()
     },
 
     addSeat(name, color) {
@@ -128,7 +145,7 @@ export const useHostStore = defineStore("host", {
     },
 
     kickSeat(seatId) {
-      api.session.kick({ seatId })
+      if (this.live) api.session.kick({ seatId })
       const seat = this.session.seats.find(s => s.id === seatId)
       if (seat) seat.occupiedBy = null
     },
@@ -158,10 +175,12 @@ export const useHostStore = defineStore("host", {
     },
 
     syncSession() {
-      const seats = JSON.parse(JSON.stringify(this.session.seats))
-      api.session.update({ seats })
       this.saveActiveSession()
       this.saveToRecent()
+      if (this.live) {
+        const seats = JSON.parse(JSON.stringify(this.session.seats))
+        api.session.update({ seats })
+      }
     },
 
     saveActiveSession() {
@@ -218,7 +237,7 @@ export const useHostStore = defineStore("host", {
     },
 
     sendControlChange(seatId, controlId, value, valueY) {
-      api.session.controlChange({ seatId, controlId, value, valueY })
+      if (this.live) api.session.controlChange({ seatId, controlId, value, valueY })
     },
 
     sendOsc(address, args) {

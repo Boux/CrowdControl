@@ -56,6 +56,12 @@ export function kickFromSeat(data) {
   socket.emit("host:kick", { sessionId: currentSession.id, ...data })
 }
 
+export function closeSession() {
+  if (!socket || !currentSession) return
+  socket.emit("host:close", { sessionId: currentSession.id })
+  currentSession = null
+}
+
 export function sendControlChange(data) {
   if (!socket || !currentSession) return
   socket.emit("host:controlChange", { sessionId: currentSession.id, ...data })

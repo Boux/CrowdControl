@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   session: {
     create: (data) => ipcRenderer.invoke("session:create", data),
     update: (data) => ipcRenderer.invoke("session:update", data),
+    close: () => ipcRenderer.invoke("session:close"),
     kick: (data) => ipcRenderer.invoke("session:kick", data),
     controlChange: (data) => ipcRenderer.invoke("session:controlChange", data)
   },

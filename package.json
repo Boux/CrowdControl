@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "serve": "node server/index.js",
     "electron": "NODE_ENV=development electron .",
     "electron:prod": "electron .",
     "electron:build": "vite build && electron-builder"
@@ -19,7 +18,6 @@
     "pinia": "^3.0.4",
     "qr-scanner": "^1.4.2",
     "qrcode": "^1.5.4",
-    "selfsigned": "^5.5.0",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.0",
     "vue": "^3.5.24",

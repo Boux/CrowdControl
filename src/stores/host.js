@@ -292,6 +292,7 @@ export const useHostStore = defineStore("host", {
     setupListeners() {
       api.relay.onEvent(({ event, data }) => {
         if (event === "control:change") this.handleControlChange(data)
+        if (event === "control:batch") this.handleControlBatch(data)
         if (event === "seat:taken") this.handleSeatTaken(data)
         if (event === "seat:released") this.handleSeatReleased(data)
       })
@@ -308,6 +309,23 @@ export const useHostStore = defineStore("host", {
       const args = data.valueY !== undefined ? [data.value, data.valueY] : [data.value]
       this.sendOsc(control.oscAddress, args)
       this.sendControlMidi(control, data.value, data.valueY)
+    },
+
+    handleControlBatch(data) {
+      const seat = this.session.seats.find(s => s.id === data.seatId)
+      if (!seat) return
+
+      for (const c of data.changes) {
+        const control = seat.controls.find(ctrl => ctrl.id === c.controlId)
+        if (!control) continue
+
+        control.value = c.value
+        if (c.valueY !== undefined) control.valueY = c.valueY
+
+        const args = c.valueY !== undefined ? [c.value, c.valueY] : [c.value]
+        this.sendOsc(control.oscAddress, args)
+        this.sendControlMidi(control, c.value, c.valueY)
+      }
     },
 
     handleSeatTaken(data) {

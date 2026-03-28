@@ -41,20 +41,31 @@ export const useSessionStore = defineStore("session", {
     },
 
     sendControl(controlId, value, valueY) {
-      const relay = useRelayStore()
-      relay.emitNoAck("control:change", {
-        sessionId: this.session.id,
-        seatId: this.currentSeat.id,
-        controlId,
-        value,
-        valueY
-      })
-
       // Optimistic local update - replace the control to ensure reactivity
       const idx = this.currentSeat?.controls?.findIndex(c => c.id === controlId)
       if (idx === -1 || idx === undefined) return
       const control = this.currentSeat.controls[idx]
       this.currentSeat.controls[idx] = { ...control, value, ...(valueY !== undefined && { valueY }) }
+
+      // Batch all control changes within a single animation frame into one message
+      if (!this._pendingControls) this._pendingControls = {}
+      this._pendingControls[controlId] = { value, valueY }
+
+      if (!this._rafId) {
+        this._rafId = requestAnimationFrame(() => {
+          const relay = useRelayStore()
+          const changes = Object.entries(this._pendingControls).map(([id, data]) => ({
+            controlId: id, value: data.value, valueY: data.valueY
+          }))
+          relay.emitNoAck("control:batch", {
+            sessionId: this.session.id,
+            seatId: this.currentSeat.id,
+            changes
+          })
+          this._pendingControls = {}
+          this._rafId = null
+        })
+      }
     },
 
     setupListeners() {
@@ -73,6 +84,16 @@ export const useSessionStore = defineStore("session", {
         if (idx === -1) return
         const control = this.currentSeat.controls[idx]
         this.currentSeat.controls[idx] = { ...control, value, ...(valueY !== undefined && { valueY }) }
+      })
+
+      relay.on("control:batch", ({ seatId, changes }) => {
+        if (!this.currentSeat || this.currentSeat.id !== seatId) return
+        for (const c of changes) {
+          const idx = this.currentSeat.controls.findIndex(ctrl => ctrl.id === c.controlId)
+          if (idx === -1) continue
+          const control = this.currentSeat.controls[idx]
+          this.currentSeat.controls[idx] = { ...control, value: c.value, ...(c.valueY !== undefined && { valueY: c.valueY }) }
+        }
       })
 
       relay.on("session:closed", () => {

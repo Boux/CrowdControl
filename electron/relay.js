@@ -5,7 +5,7 @@ let currentSession = null
 
 export function connectToRelay(url, onEvent) {
   return new Promise((resolve) => {
-    socket = io(url, { rejectUnauthorized: false })
+    socket = io(url, { rejectUnauthorized: false, transports: ["websocket"] })
 
     socket.on("connect", () => {
       console.log("Connected to relay:", socket.id)
@@ -18,6 +18,7 @@ export function connectToRelay(url, onEvent) {
     })
 
     socket.on("control:change", data => onEvent("control:change", data))
+    socket.on("control:batch", data => onEvent("control:batch", data))
     socket.on("seat:taken", data => onEvent("seat:taken", data))
     socket.on("seat:released", data => onEvent("seat:released", data))
     socket.on("session:updated", data => onEvent("session:updated", data))

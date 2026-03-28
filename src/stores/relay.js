@@ -22,7 +22,7 @@ export const useRelayStore = defineStore("relay", {
       }
 
       return new Promise((resolve) => {
-        this.socket = url ? io(url) : io()
+        this.socket = url ? io(url, { transports: ["websocket"] }) : io({ transports: ["websocket"] })
 
         this.socket.on("connect", () => {
           this.connected = true

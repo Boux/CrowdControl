@@ -2,7 +2,7 @@ import { Server } from "socket.io"
 import { nanoid } from "nanoid"
 
 export function attachRelay(httpServer) {
-  const io = new Server(httpServer, { cors: { origin: "*" } })
+  const io = new Server(httpServer, { cors: { origin: "*" }, transports: ["websocket"] })
   const sessions = new Map()
 
   function updateControlValue(session, data) {
@@ -111,6 +111,19 @@ export function attachRelay(httpServer) {
         controlId: data.controlId,
         value: data.value,
         valueY: data.valueY
+      })
+    })
+
+    socket.on("control:batch", (data) => {
+      const session = sessions.get(data.sessionId)
+      if (!session) return
+
+      for (const c of data.changes) {
+        updateControlValue(session, { seatId: data.seatId, controlId: c.controlId, value: c.value, valueY: c.valueY })
+      }
+      io.to(`host:${data.sessionId}`).emit("control:batch", {
+        seatId: data.seatId,
+        changes: data.changes
       })
     })
 

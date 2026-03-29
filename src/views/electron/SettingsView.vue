@@ -102,7 +102,7 @@ export default {
     </header>
 
     <div class='section-label'>Relay Server</div>
-    <table>
+    <table><tbody>
       <tr>
         <td>Server</td>
         <td>
@@ -125,13 +125,13 @@ export default {
           </div>
         </td>
       </tr>
-    </table>
+    </tbody></table>
 
     <div class='section-header'>
       <div class='section-label'>OSC Output</div>
       <label class='toggle'><input type='checkbox' v-model='local.osc.enabled' /><span>{{ local.osc.enabled ? "On" : "Off" }}</span></label>
     </div>
-    <table v-if='local.osc.enabled'>
+    <table v-if='local.osc.enabled'><tbody>
       <tr>
         <td>Host</td>
         <td><input v-model='local.osc.host' type='text' /></td>
@@ -149,13 +149,13 @@ export default {
           </select>
         </td>
       </tr>
-    </table>
+    </tbody></table>
 
     <div class='section-header'>
       <div class='section-label'>MIDI Output</div>
       <label class='toggle'><input type='checkbox' v-model='local.midi.enabled' /><span>{{ local.midi.enabled ? "On" : "Off" }}</span></label>
     </div>
-    <table v-if='local.midi.enabled'>
+    <table v-if='local.midi.enabled'><tbody>
       <tr>
         <td>Device</td>
         <td>
@@ -168,7 +168,7 @@ export default {
           </div>
         </td>
       </tr>
-    </table>
+    </tbody></table>
 
     <div v-if='showAddModal' class='modal-overlay' @click.self='showAddModal = false'>
       <div class='modal'>

@@ -16,7 +16,7 @@ function relayPlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: process.env.ELECTRON ? "./" : "/",
+  base: "/",
   plugins: [vue(), basicSsl(), relayPlugin()],
   server: {
     host: "0.0.0.0",

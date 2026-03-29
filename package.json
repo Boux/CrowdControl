@@ -7,10 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "start": "node server/index.js",
-    "all": "vite & sleep 0.25 && NODE_ENV=development electron .",
-    "electron": "NODE_ENV=development electron .",
-    "electron:prod": "electron .",
-    "electron:build": "ELECTRON=1 vite build && electron-builder"
+    "electron": "vite --config vite.electron.config.js",
+    "electron:build": "vite build --config vite.electron.config.js && electron-builder"
   },
   "dependencies": {
     "express": "^5.2.1",
@@ -35,13 +33,14 @@
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
     "sass": "^1.97.3",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "vite-plugin-electron": "^0.29.1"
   },
   "build": {
     "appId": "com.crowdcontrol.app",
     "productName": "Crowd Control",
     "files": [
-      "dist/**/*",
+      "dist-electron/**/*",
       "electron/**/*"
     ],
     "directories": {

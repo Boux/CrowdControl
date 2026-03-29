@@ -1,8 +1,6 @@
 import { defineStore } from "pinia"
 import { io } from "socket.io-client"
 
-const isElectron = !!window.electronAPI
-
 export const useRelayStore = defineStore("relay", {
   state: () => ({
     socket: null,
@@ -12,15 +10,6 @@ export const useRelayStore = defineStore("relay", {
 
   actions: {
     async connect(url) {
-      if (isElectron) {
-        const result = await window.electronAPI.relay.connect(url)
-        if (result.success) {
-          this.connected = true
-          this.socketId = result.socketId
-        }
-        return result
-      }
-
       return new Promise((resolve) => {
         this.socket = url ? io(url, { transports: ["websocket"] }) : io({ transports: ["websocket"] })
 
@@ -42,12 +31,8 @@ export const useRelayStore = defineStore("relay", {
     },
 
     disconnect() {
-      if (isElectron) {
-        window.electronAPI.relay.disconnect()
-      } else {
-        this.socket?.disconnect()
-        this.socket = null
-      }
+      this.socket?.disconnect()
+      this.socket = null
       this.connected = false
       this.socketId = null
     },

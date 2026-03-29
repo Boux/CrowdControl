@@ -86,6 +86,20 @@ export const useSessionStore = defineStore("session", {
         this.stopHeartbeat()
         this.currentSeat = null
       })
+
+      relay.on("connect", async () => {
+        if (!this.session) return
+        try {
+          await relay.emit("client:join", { sessionId: this.session.id })
+          if (this.currentSeat) {
+            const result = await relay.emit("client:takeSeat", { sessionId: this.session.id, seatId: this.currentSeat.id })
+            if (!result.success) this.currentSeat = null
+          }
+        } catch {
+          this.session = null
+          this.currentSeat = null
+        }
+      })
     },
 
     startHeartbeat() {

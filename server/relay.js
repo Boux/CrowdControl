@@ -116,7 +116,11 @@ export function attachRelay(httpServer) {
       if (!session) return
 
       const isHost = session.hostSocketId === socket.id
-      if (!isHost && !seatId) return
+      if (!isHost) {
+        if (!seatId) return
+        const seat = session.seats.find(s => s.id === seatId)
+        if (!seat || seat.occupiedBy !== socket.id) return
+      }
 
       for (const c of changes) updateControlValue(session, seatId, c)
 
@@ -151,7 +155,8 @@ export function attachRelay(httpServer) {
 
       sessions.forEach((session, sessionId) => {
         if (session.hostSocketId === socket.id) {
-          session.hostSocketId = null
+          io.to(`session:${sessionId}`).emit("session:closed")
+          sessions.delete(sessionId)
           return
         }
 
@@ -173,7 +178,9 @@ export function attachRelay(httpServer) {
         .filter(s => s.occupiedBy && s.lastHeartbeat && now - s.lastHeartbeat > 5000)
         .forEach(seat => {
           console.log("Releasing stale seat:", seat.id)
+          const staleSocketId = seat.occupiedBy
           seat.occupiedBy = null
+          io.to(staleSocketId).emit("seat:kicked")
           io.to(`host:${sessionId}`).emit("seat:released", { seatId: seat.id })
           io.to(`session:${sessionId}`).emit("session:updated", { session })
         })

@@ -11,13 +11,15 @@ export default {
     newSeatId: null,
     goingLive: false,
     menuOpen: false,
-    logOpen: false
+    oscLogOpen: false,
+    midiLogOpen: false
   }),
   computed: {
     host() { return useHostStore() },
     session() { return this.host.session },
     seats() { return this.host.seats },
     oscLogs() { return this.host.oscLogs },
+    midiLogs() { return this.host.midiLogs },
     oscConfig() { return this.host.settings.osc },
     sessionUrl() {
       const base = this.host.settings.relay.url.replace(/\/$/, "")
@@ -151,17 +153,30 @@ export default {
       </div>
     </div>
 
-    <div class='osc-bar'>
-      <div v-if='logOpen' class='osc-log'>
+    <div class='log-bar'>
+      <div v-if='oscLogOpen' class='log-panel'>
         <div v-for='(log, i) in oscLogs' :key='i' class='log'>
           <span class='address'>{{ log.address }}</span>
           <span class='args'>{{ log.args }}</span>
         </div>
         <span v-if='!oscLogs.length' class='empty'>No messages yet</span>
       </div>
-      <div class='osc-header' @click='logOpen = !logOpen'>
-        <span>OSC Log ({{ oscLogs.length }})</span>
-        <Icon :name='logOpen ? "chevron-down" : "chevron-up"' :size='14' />
+      <div v-if='midiLogOpen' class='log-panel'>
+        <div v-for='(log, i) in midiLogs' :key='i' class='log'>
+          <span class='address'>Ch {{ log.ch + 1 }} CC {{ log.cc }}</span>
+          <span class='args'>{{ log.value }}</span>
+        </div>
+        <span v-if='!midiLogs.length' class='empty'>No messages yet</span>
+      </div>
+      <div class='log-headers'>
+        <div class='log-header' @click='oscLogOpen = !oscLogOpen; midiLogOpen = false'>
+          <span>OSC Log ({{ oscLogs.length }})</span>
+          <Icon :name='oscLogOpen ? "chevron-down" : "chevron-up"' :size='14' />
+        </div>
+        <div class='log-header' @click='midiLogOpen = !midiLogOpen; oscLogOpen = false'>
+          <span>MIDI Log ({{ midiLogs.length }})</span>
+          <Icon :name='midiLogOpen ? "chevron-down" : "chevron-up"' :size='14' />
+        </div>
       </div>
     </div>
   </div>
@@ -314,12 +329,16 @@ header
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))
   gap: 1rem
 
-.osc-bar
+.log-bar
   flex-shrink: 0
   background: #0d0d1a
   border-top: 1px solid #333
 
-.osc-header
+.log-headers
+  display: flex
+
+.log-header
+  flex: 1
   display: flex
   justify-content: space-between
   align-items: center
@@ -331,7 +350,10 @@ header
   &:hover
     color: #aaa
 
-.osc-log
+  & + .log-header
+    border-left: 1px solid #333
+
+.log-panel
   padding: 0.5rem 1rem
   max-height: 200px
   overflow-y: auto

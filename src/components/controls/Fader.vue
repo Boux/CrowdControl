@@ -38,7 +38,7 @@ export default {
         : (e.clientX - rect.left) / rect.width
       const clamped = Math.max(0, Math.min(1, p))
       const value = clamped * (this.max - this.min) + this.min
-      this.$emit("change", value)
+      if (value !== this.value) this.$emit("change", value)
     }
   }
 }

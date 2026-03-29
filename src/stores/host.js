@@ -33,6 +33,7 @@ export const useHostStore = defineStore("host", {
     oscConnected: false,
     midiConnected: false,
     oscLogs: [],
+    midiLogs: [],
     settings: loadSettings()
   }),
 
@@ -249,8 +250,12 @@ export const useHostStore = defineStore("host", {
         if (this.oscLogs.length > 50) this.oscLogs.pop()
       }
       if (this.settings.midi.enabled && this.midiConnected)
-        for (const { ch, cc, value } of control.getAllCCValues())
-          api.midi.send(ch, cc, Math.round(value * 127))
+        for (const { ch, cc, value } of control.getAllCCValues()) {
+          const midiVal = Math.round(value * 127)
+          api.midi.send(ch, cc, midiVal)
+          this.midiLogs.unshift({ ch, cc, value: midiVal, time: Date.now() })
+          if (this.midiLogs.length > 50) this.midiLogs.pop()
+        }
     },
 
     sendControlChange(seatId, control) {

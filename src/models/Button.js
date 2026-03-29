@@ -10,6 +10,10 @@ export default class Button extends Control {
 
   get valueKeys() { return ["value"] }
 
+  setValues(input, interp, onTick) {
+    super.setValues(input, 0, onTick)
+  }
+
   _normalize(val) { return val > 0 ? 1 : 0 }
 
   toJSON() { return { ...super.toJSON(), onValue: this.onValue, offValue: this.offValue } }

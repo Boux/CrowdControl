@@ -39,7 +39,7 @@ export default {
       const py = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height))
       const x = px * (this.max - this.min) + this.min
       const y = (1 - py) * (this.max - this.min) + this.min
-      this.$emit("change", [x, y])
+      if (x !== this.valueX || y !== this.valueY) this.$emit("change", [x, y])
     }
   }
 }

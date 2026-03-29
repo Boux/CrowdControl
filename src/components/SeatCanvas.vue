@@ -29,8 +29,8 @@ export default {
       <XYPad
         v-if='c.type === "xy-pad"'
         :label='c.label'
-        :value-x='c.values.x ?? 0.5'
-        :value-y='c.values.y ?? 0.5'
+        :value-x='c.interpolatedValues?.x ?? c.values.x ?? 0.5'
+        :value-y='c.interpolatedValues?.y ?? c.values.y ?? 0.5'
         :min='c.min'
         :max='c.max'
         @change='v => onChange(c, v)'
@@ -38,7 +38,7 @@ export default {
       <Fader
         v-else-if='c.type === "fader"'
         :label='c.label'
-        :value='c.values.value ?? 0'
+        :value='c.interpolatedValues?.value ?? c.values.value ?? 0'
         :min='c.min'
         :max='c.max'
         :orientation='c.orientation'
@@ -53,7 +53,7 @@ export default {
       <Toggle
         v-else-if='c.type === "toggle"'
         :label='c.label'
-        :value='c.values.value ?? 0'
+        :value='c.interpolatedValues?.value ?? c.values.value ?? 0'
         :on-value='c.onValue'
         :off-value='c.offValue'
         @change='v => onChange(c, v)'

@@ -312,8 +312,8 @@ export const useHostStore = defineStore("host", {
       for (const wire of data.changes) {
         const control = seat.controls.find(c => c.id === wire[0])
         if (!control) continue
-        Control.fromWire(wire, control)
-        this.sendControlOutput(control)
+        Control.fromWire(wire, control, () => this.sendControlOutput(control))
+        if (!wire[2]) this.sendControlOutput(control)
       }
     },
 

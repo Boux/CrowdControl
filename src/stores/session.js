@@ -45,7 +45,7 @@ export const useSessionStore = defineStore("session", {
     sendControl(control) {
       // setValues already called by SeatCanvas — just batch for network
       if (!this._pendingControls) this._pendingControls = {}
-      this._pendingControls[control.id] = control.toWire()
+      this._pendingControls[control.id] = control.toWire(50)
 
       if (!this._sendTimer) {
         this._sendTimer = setTimeout(() => {

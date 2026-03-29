@@ -11,6 +11,12 @@ export default class Control {
     this.channel = data.channel ?? 0
     this.cc_num = data.cc_num ? { ...data.cc_num } : {}
     this.values = data.values ? { ...data.values } : {}
+    this.interpolatedValues = { ...this.values }
+    this._interpInterval = null
+    this._interpStart = 0
+    this._interpDuration = 0
+    this._interpFrom = {}
+    this._onTick = null
     this.x = data.x
     this.y = data.y
     this.w = data.w
@@ -19,7 +25,7 @@ export default class Control {
 
   get valueKeys() { return ["value"] }
 
-  setValues(input) {
+  setValues(input, interp, onTick) {
     if (typeof input === "number") {
       this.values[this.valueKeys[0]] = input
     } else if (Array.isArray(input)) {
@@ -27,17 +33,47 @@ export default class Control {
     } else {
       Object.assign(this.values, input)
     }
+
+    if (!interp) {
+      this.stopInterp()
+      Object.assign(this.interpolatedValues, this.values)
+      return
+    }
+
+    this._interpFrom = { ...this.interpolatedValues }
+    this._interpStart = Date.now()
+    this._interpDuration = Math.min(interp, 1000)
+    this._onTick = onTick
+
+    if (!this._interpInterval) {
+      this._interpInterval = setInterval(() => this._tick(), 5)
+    }
+  }
+
+  _tick() {
+    const t = Math.min(1, (Date.now() - this._interpStart) / this._interpDuration)
+    for (const k of this.valueKeys)
+      this.interpolatedValues[k] = this._interpFrom[k] + (this.values[k] - this._interpFrom[k]) * t
+    if (this._onTick) this._onTick(this)
+    if (t >= 1) this.stopInterp()
+  }
+
+  stopInterp() {
+    if (this._interpInterval) {
+      clearInterval(this._interpInterval)
+      this._interpInterval = null
+    }
   }
 
   getOSCArgs() {
-    return this.valueKeys.map(k => this.values[k] ?? 0)
+    return this.valueKeys.map(k => this.interpolatedValues[k] ?? 0)
   }
 
   getAllCCValues() {
     const result = []
     for (const key of this.valueKeys) {
       if (this.cc_num[key] == null) continue
-      result.push({ ch: this.channel, cc: this.cc_num[key], value: this._normalize(this.values[key] ?? 0) })
+      result.push({ ch: this.channel, cc: this.cc_num[key], value: this._normalize(this.interpolatedValues[key] ?? 0) })
     }
     return result
   }
@@ -46,13 +82,16 @@ export default class Control {
     return (val - this.min) / (this.max - this.min)
   }
 
-  toWire() {
+  toWire(interp) {
     const vals = this.valueKeys.map(k => r(this.values[k] ?? 0))
-    return [this.id, vals.length === 1 ? vals[0] : vals]
+    const wire = [this.id, vals.length === 1 ? vals[0] : vals]
+    if (interp) wire.push(interp)
+    return wire
   }
 
-  static fromWire(arr, control) {
-    control.setValues(Array.isArray(arr[1]) ? arr[1] : [arr[1]])
+  static fromWire(arr, control, onTick) {
+    const interp = arr[2] || 0
+    control.setValues(Array.isArray(arr[1]) ? arr[1] : [arr[1]], interp, onTick)
   }
 
   clone() {

@@ -1,7 +1,7 @@
 import { defineStore } from "pinia"
 import { nanoid } from "nanoid"
 import { nameToSlug, collectUsedMidi, collectUsedAddresses, assignMidi, nextAddress } from "../utils/control.js"
-import { MIDI_MAX, MAX_LOG_ENTRIES, DEFAULT_RELAY_SERVER } from "../constants.js"
+import { MIDI_MAX, MAX_LOG_ENTRIES, DEFAULT_RELAY_SERVER, HOST_POLL_RATE } from "../constants.js"
 import { createControl, hydrateSeats } from "../models/index.js"
 import Control from "../models/Control.js"
 
@@ -265,13 +265,13 @@ export const useHostStore = defineStore("host", {
       if (!this._pendingHostControls[seatId]) this._pendingHostControls[seatId] = {}
       this._pendingHostControls[seatId][control.id] = control.toWire()
 
-      if (!this._hostRafId) {
-        this._hostRafId = requestAnimationFrame(() => {
+      if (!this._hostSendTimer) {
+        this._hostSendTimer = setTimeout(() => {
           for (const [sid, controls] of Object.entries(this._pendingHostControls))
-            api.session.controlBatch({ seatId: sid, changes: Object.values(controls) })
+            api.session.controlBatch({ seatId: sid, changes: JSON.parse(JSON.stringify(Object.values(controls))) })
           this._pendingHostControls = {}
-          this._hostRafId = null
-        })
+          this._hostSendTimer = null
+        }, HOST_POLL_RATE)
       }
     },
 

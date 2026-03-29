@@ -15,9 +15,7 @@ export default {
     relay() { return useRelayStore() },
     session() { return useSessionStore() }
   },
-  async mounted() {
-    await this.relay.connect()
-  },
+  mounted() {},
   beforeUnmount() {
     this.stopScan()
   },
@@ -26,6 +24,8 @@ export default {
       const sessionCode = (code || this.sessionCode).trim()
       if (!sessionCode) return
       this.connecting = true
+      if (!this.relay.connected) await this.relay.connect()
+      if (!this.relay.connected) { alert("Could not connect to server"); this.connecting = false; return }
       await this.session.join(sessionCode)
         .then(() => this.$router.push(`/session/${sessionCode}`))
         .catch(err => alert(err.message))
@@ -64,10 +64,6 @@ export default {
     <h1>Crowd Control</h1>
     <p class='subtitle'>Join a session to control</p>
 
-    <div class='status' :class='{ connected: relay.connected }'>
-      {{ relay.connected ? "Connected" : "Connecting..." }}
-    </div>
-
     <div v-if='scanning' class='scanner'>
       <video ref='video'></video>
       <p v-if='scanError' class='scan-error'>{{ scanError }}</p>
@@ -75,13 +71,13 @@ export default {
     </div>
 
     <template v-else>
-      <IconButton icon='camera' class='scan-btn' @click='startScan' :disabled='!relay.connected'>Scan QR Code</IconButton>
+      <IconButton icon='camera' class='scan-btn' @click='startScan'>Scan QR Code</IconButton>
 
       <div class='divider'><span>or enter code</span></div>
 
       <div class='join-form'>
         <input v-model='sessionCode' type='text' placeholder='Session code' @keyup.enter='join()' />
-        <IconButton icon='log-in' @click='join()' :disabled='!relay.connected || connecting'>Join</IconButton>
+        <IconButton icon='log-in' @click='join()' :disabled='connecting'>{{ connecting ? "Joining..." : "Join" }}</IconButton>
       </div>
     </template>
   </div>

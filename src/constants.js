@@ -3,6 +3,7 @@ export const DEFAULT_RELAY_SERVER = "https://crowdcontrol-production.up.railway.
 
 // Network
 export const CONTROL_POLL_RATE = 25          // ms between batched control sends (40Hz)
+export const HOST_POLL_RATE = 50             // ms between batched host control sends (20Hz)
 export const HEARTBEAT_INTERVAL = 2000       // ms between client heartbeats
 
 // Interpolation

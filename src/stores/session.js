@@ -2,6 +2,7 @@ import { defineStore } from "pinia"
 import { useRelayStore } from "./relay"
 import { hydrateSeats } from "../models/index"
 import Control from "../models/Control"
+import { CONTROL_POLL_RATE, DEFAULT_INTERP, HEARTBEAT_INTERVAL } from "../constants"
 
 export const useSessionStore = defineStore("session", {
   state: () => ({
@@ -45,7 +46,7 @@ export const useSessionStore = defineStore("session", {
     sendControl(control) {
       // setValues already called by SeatCanvas — just batch for network
       if (!this._pendingControls) this._pendingControls = {}
-      this._pendingControls[control.id] = control.toWire(50)
+      this._pendingControls[control.id] = control.toWire(DEFAULT_INTERP)
 
       if (!this._sendTimer) {
         this._sendTimer = setTimeout(() => {
@@ -54,7 +55,7 @@ export const useSessionStore = defineStore("session", {
           relay.emitNoAck("control:batch", { seatId: this.currentSeat.id, changes })
           this._pendingControls = {}
           this._sendTimer = null
-        }, 50)
+        }, CONTROL_POLL_RATE)
       }
     },
 
@@ -91,7 +92,7 @@ export const useSessionStore = defineStore("session", {
       this.heartbeatInterval = setInterval(() => {
         const relay = useRelayStore()
         relay.emitNoAck("client:heartbeat", { sessionId: this.session.id })
-      }, 2000)
+      }, HEARTBEAT_INTERVAL)
     },
 
     stopHeartbeat() {

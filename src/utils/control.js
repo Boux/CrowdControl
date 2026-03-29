@@ -1,5 +1,6 @@
 import { layoutDefaults } from "./layout.js"
 import { createControl } from "../models/index.js"
+import { MIDI_CHANNELS, MIDI_CC_MAX } from "../constants.js"
 
 export function nameToSlug(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")
@@ -15,8 +16,8 @@ export function collectUsedMidi(seats) {
 }
 
 export function nextMidiSlot(usedMidi) {
-  for (let ch = 0; ch < 16; ch++)
-    for (let cc = 0; cc < 128; cc++)
+  for (let ch = 0; ch < MIDI_CHANNELS; ch++)
+    for (let cc = 0; cc <= MIDI_CC_MAX; cc++)
       if (!usedMidi.has(`${ch}:${cc}`)) return { ch, cc }
   return { ch: 0, cc: 0 }
 }

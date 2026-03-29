@@ -1,6 +1,7 @@
 import { defineStore } from "pinia"
 import { nanoid } from "nanoid"
 import { nameToSlug, collectUsedMidi, collectUsedAddresses, assignMidi, nextAddress } from "../utils/control.js"
+import { MIDI_MAX, MAX_LOG_ENTRIES } from "../constants.js"
 import { createControl, hydrateSeats } from "../models/index.js"
 import Control from "../models/Control.js"
 
@@ -247,14 +248,14 @@ export const useHostStore = defineStore("host", {
         const args = control.getOSCArgs()
         api.osc.send(control.oscAddress, args)
         this.oscLogs.unshift({ address: control.oscAddress, args: args.map(v => v.toFixed(2)).join(", "), time: Date.now() })
-        if (this.oscLogs.length > 50) this.oscLogs.pop()
+        if (this.oscLogs.length > MAX_LOG_ENTRIES) this.oscLogs.pop()
       }
       if (this.settings.midi.enabled && this.midiConnected)
         for (const { ch, cc, value } of control.getAllCCValues()) {
-          const midiVal = Math.round(value * 127)
+          const midiVal = Math.round(value * MIDI_MAX)
           api.midi.send(ch, cc, midiVal)
           this.midiLogs.unshift({ ch, cc, value: midiVal, time: Date.now() })
-          if (this.midiLogs.length > 50) this.midiLogs.pop()
+          if (this.midiLogs.length > MAX_LOG_ENTRIES) this.midiLogs.pop()
         }
     },
 

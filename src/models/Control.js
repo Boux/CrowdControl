@@ -1,4 +1,7 @@
-const r = v => Math.round(v * 1000) / 1000
+import { VALUE_DECIMALS, INTERP_TICK_RATE, MAX_INTERP_DURATION } from "../constants.js"
+
+const factor = Math.pow(10, VALUE_DECIMALS)
+const r = v => Math.round(v * factor) / factor
 
 export default class Control {
   constructor(data) {
@@ -42,11 +45,11 @@ export default class Control {
 
     this._interpFrom = { ...this.interpolatedValues }
     this._interpStart = Date.now()
-    this._interpDuration = Math.min(interp, 1000)
+    this._interpDuration = Math.min(interp, MAX_INTERP_DURATION)
     this._onTick = onTick
 
     if (!this._interpInterval) {
-      this._interpInterval = setInterval(() => this._tick(), 5)
+      this._interpInterval = setInterval(() => this._tick(), INTERP_TICK_RATE)
     }
   }
 

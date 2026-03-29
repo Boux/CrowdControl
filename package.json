@@ -10,7 +10,7 @@
     "all": "vite & sleep 0.25 && NODE_ENV=development electron .",
     "electron": "NODE_ENV=development electron .",
     "electron:prod": "electron .",
-    "electron:build": "vite build && electron-builder"
+    "electron:build": "ELECTRON=1 vite build && electron-builder"
   },
   "dependencies": {
     "express": "^5.2.1",

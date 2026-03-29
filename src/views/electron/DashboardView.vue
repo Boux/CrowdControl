@@ -40,7 +40,7 @@ export default {
       this.host.session = { id: saved.id, name: saved.name, seats: saved.seats }
     }
     if (!this.host.oscConnected) await this.host.connectOsc()
-    if (this.host.settings.midi.device && !this.host.midiConnected) await this.host.connectMidi()
+    if (!this.host.midiConnected) await this.host.connectMidi()
   },
   methods: {
     addSeat() {

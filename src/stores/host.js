@@ -5,9 +5,9 @@ import { nameToSlug, collectUsedMidi, collectUsedAddresses, assignMidi, nextAddr
 const api = window.electronAPI
 
 const defaultSettings = {
-  osc: { host: "127.0.0.1", port: 9000, protocol: "udp" },
-  relay: { url: api?.isDev === false ? "https://localhost:3001" : "https://localhost:5173" },
-  midi: { device: "" }
+  osc: { enabled: true, host: "127.0.0.1", port: 9000, protocol: "udp" },
+  relay: { url: "https://crowdcontrol-production.up.railway.app", servers: ["https://crowdcontrol-production.up.railway.app"] },
+  midi: { enabled: false, device: "" }
 }
 
 function loadSettings() {
@@ -42,8 +42,8 @@ export const useHostStore = defineStore("host", {
     saveSettings(settings) {
       this.settings = settings
       localStorage.setItem("crowdosc:settings", JSON.stringify(settings))
-      if (this.oscConnected) this.connectOsc()
-      if (settings.midi.device) this.connectMidi()
+      if (settings.osc.enabled && this.oscConnected) this.connectOsc()
+      if (settings.midi.enabled && settings.midi.device) this.connectMidi()
       else this.disconnectMidi()
     },
 
@@ -230,6 +230,7 @@ export const useHostStore = defineStore("host", {
     },
 
     async connectOsc() {
+      if (!this.settings.osc.enabled) return { success: false }
       const config = { ...this.settings.osc }
       const result = await api.osc.connect(config)
       this.oscConnected = result.success
@@ -259,6 +260,7 @@ export const useHostStore = defineStore("host", {
     },
 
     sendOsc(address, args) {
+      if (!this.settings.osc.enabled) return
       api.osc.send(address, args)
       this.oscLogs.unshift({ address, args: args.map(v => v.toFixed(2)).join(", "), time: Date.now() })
       if (this.oscLogs.length > 50) this.oscLogs.pop()
@@ -270,7 +272,7 @@ export const useHostStore = defineStore("host", {
     },
 
     async connectMidi() {
-      if (!api?.midi) return { success: false }
+      if (!api?.midi || !this.settings.midi.enabled) return { success: false }
       const device = this.settings.midi.device
       if (!device) return { success: false }
       const result = await api.midi.connect(device)
@@ -290,6 +292,7 @@ export const useHostStore = defineStore("host", {
     },
 
     sendControlMidi(control, value, valueY) {
+      if (!this.settings.midi.enabled) return
       if (!this.midiConnected || control.midiCC === undefined) return
       const ch = control.midiChannel || 0
       const toMidi = (v) => Math.round(v * 127)

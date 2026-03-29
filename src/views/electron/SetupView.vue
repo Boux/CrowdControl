@@ -18,7 +18,7 @@ export default {
       this.host.createSession(this.sessionName.trim())
 
       await this.host.connectOsc()
-      if (this.host.settings.midi.device) await this.host.connectMidi()
+      await this.host.connectMidi()
 
       if (Array.isArray(restoreSeats)) {
         this.host.session.seats = restoreSeats

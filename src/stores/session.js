@@ -49,19 +49,16 @@ export const useSessionStore = defineStore("session", {
 
       // Batch all control changes within a single animation frame into one message
       if (!this._pendingControls) this._pendingControls = {}
-      this._pendingControls[controlId] = { value, valueY }
+      const r = v => Math.round(v * 1000) / 1000
+      this._pendingControls[controlId] = { value: r(value), valueY: valueY !== undefined ? r(valueY) : undefined }
 
       if (!this._rafId) {
         this._rafId = requestAnimationFrame(() => {
           const relay = useRelayStore()
-          const changes = Object.entries(this._pendingControls).map(([id, data]) => ({
-            controlId: id, value: data.value, valueY: data.valueY
-          }))
-          relay.emitNoAck("control:batch", {
-            sessionId: this.session.id,
-            seatId: this.currentSeat.id,
-            changes
-          })
+          const changes = Object.entries(this._pendingControls).map(([id, d]) =>
+            d.valueY !== undefined ? [id, d.value, d.valueY] : [id, d.value]
+          )
+          relay.emitNoAck("control:batch", { seatId: this.currentSeat.id, changes })
           this._pendingControls = {}
           this._rafId = null
         })
@@ -78,21 +75,13 @@ export const useSessionStore = defineStore("session", {
         this.currentSeat = session.seats.find(s => s.id === this.currentSeat.id) || null
       })
 
-      relay.on("control:change", ({ seatId, controlId, value, valueY }) => {
-        if (!this.currentSeat || this.currentSeat.id !== seatId) return
-        const idx = this.currentSeat.controls.findIndex(c => c.id === controlId)
-        if (idx === -1) return
-        const control = this.currentSeat.controls[idx]
-        this.currentSeat.controls[idx] = { ...control, value, ...(valueY !== undefined && { valueY }) }
-      })
-
       relay.on("control:batch", ({ seatId, changes }) => {
         if (!this.currentSeat || this.currentSeat.id !== seatId) return
         for (const c of changes) {
-          const idx = this.currentSeat.controls.findIndex(ctrl => ctrl.id === c.controlId)
+          const idx = this.currentSeat.controls.findIndex(ctrl => ctrl.id === c[0])
           if (idx === -1) continue
           const control = this.currentSeat.controls[idx]
-          this.currentSeat.controls[idx] = { ...control, value: c.value, ...(c.valueY !== undefined && { valueY: c.valueY }) }
+          this.currentSeat.controls[idx] = { ...control, value: c[1], ...(c[2] !== undefined && { valueY: c[2] }) }
         }
       })
 

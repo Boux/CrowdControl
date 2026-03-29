@@ -21,6 +21,7 @@ export function attachRelay(httpServer) {
         const session = sessions.get(data.id)
         session.hostSocketId = socket.id
         if (data.name) session.name = data.name
+        socket.data.sessionId = data.id
         socket.join(`session:${data.id}`)
         socket.join(`host:${data.id}`)
         callback({ success: true, session })
@@ -31,6 +32,7 @@ export function attachRelay(httpServer) {
       const id = data.id || nanoid(8)
       const session = { id, name: data.name, hostSocketId: socket.id, seats: [], oscConfig: data.oscConfig || {} }
       sessions.set(id, session)
+      socket.data.sessionId = id
       socket.join(`session:${id}`)
       socket.join(`host:${id}`)
       callback({ success: true, session })
@@ -71,6 +73,7 @@ export function attachRelay(httpServer) {
       const session = sessions.get(data.sessionId)
       if (!session) return callback({ success: false, error: "Session not found" })
 
+      socket.data.sessionId = data.sessionId
       socket.join(`session:${data.sessionId}`)
       callback({ success: true, session })
     })
@@ -84,6 +87,8 @@ export function attachRelay(httpServer) {
       if (seat.occupiedBy && seat.occupiedBy !== socket.id) return callback({ success: false, error: "Seat taken" })
 
       seat.occupiedBy = socket.id
+      socket.data.seatId = data.seatId
+      socket.join(`seat:${data.sessionId}:${data.seatId}`)
       io.to(`host:${data.sessionId}`).emit("seat:taken", { seatId: seat.id, socketId: socket.id })
       io.to(`session:${data.sessionId}`).emit("session:updated", { session })
       callback({ success: true, seat })
@@ -97,47 +102,30 @@ export function attachRelay(httpServer) {
       if (!seat || seat.occupiedBy !== socket.id) return
 
       seat.occupiedBy = null
+      socket.leave(`seat:${data.sessionId}:${data.seatId}`)
+      socket.data.seatId = null
       io.to(`host:${data.sessionId}`).emit("seat:released", { seatId: seat.id })
       io.to(`session:${data.sessionId}`).emit("session:updated", { session })
     })
 
-    socket.on("control:change", (data) => {
-      const session = sessions.get(data.sessionId)
+    socket.on("control:batch", ({ seatId, changes }) => {
+      const { sessionId } = socket.data
+      const session = sessions.get(sessionId)
       if (!session) return
 
-      updateControlValue(session, data)
-      io.to(`host:${data.sessionId}`).emit("control:change", {
-        seatId: data.seatId,
-        controlId: data.controlId,
-        value: data.value,
-        valueY: data.valueY
-      })
-    })
+      const isHost = session.hostSocketId === socket.id
+      if (!isHost && !seatId) return
 
-    socket.on("control:batch", (data) => {
-      const session = sessions.get(data.sessionId)
-      if (!session) return
-
-      for (const c of data.changes) {
-        updateControlValue(session, { seatId: data.seatId, controlId: c.controlId, value: c.value, valueY: c.valueY })
+      for (const c of changes) {
+        updateControlValue(session, { seatId, controlId: c[0], value: c[1], valueY: c[2] })
       }
-      io.to(`host:${data.sessionId}`).emit("control:batch", {
-        seatId: data.seatId,
-        changes: data.changes
-      })
-    })
 
-    socket.on("host:controlChange", (data) => {
-      const session = sessions.get(data.sessionId)
-      if (!session || session.hostSocketId !== socket.id) return
+      const room = isHost ? `seat:${sessionId}:${seatId}` : `host:${sessionId}`
+      const members = io.sockets.adapter.rooms.get(room)
+      console.log(`control:batch from ${isHost ? "host" : "client"}, room: ${room}, members: ${members?.size || 0}`)
 
-      updateControlValue(session, data)
-      socket.to(`session:${data.sessionId}`).emit("control:change", {
-        seatId: data.seatId,
-        controlId: data.controlId,
-        value: data.value,
-        valueY: data.valueY
-      })
+      if (isHost) socket.to(`seat:${sessionId}:${seatId}`).emit("control:batch", { seatId, changes })
+      else io.to(`host:${sessionId}`).emit("control:batch", { seatId, changes })
     })
 
     socket.on("host:kick", (data) => {

@@ -17,7 +17,6 @@ export function connectToRelay(url, onEvent) {
       resolve({ success: false, error: err.message })
     })
 
-    socket.on("control:change", data => onEvent("control:change", data))
     socket.on("control:batch", data => onEvent("control:batch", data))
     socket.on("seat:taken", data => onEvent("seat:taken", data))
     socket.on("seat:released", data => onEvent("seat:released", data))
@@ -63,9 +62,9 @@ export function closeSession() {
   currentSession = null
 }
 
-export function sendControlChange(data) {
+export function sendControlBatch(data) {
   if (!socket || !currentSession) return
-  socket.emit("host:controlChange", { sessionId: currentSession.id, ...data })
+  socket.emit("control:batch", data)
 }
 
 export function getSession() {

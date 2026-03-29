@@ -237,7 +237,25 @@ export const useHostStore = defineStore("host", {
     },
 
     sendControlChange(seatId, controlId, value, valueY) {
-      if (this.live) api.session.controlChange({ seatId, controlId, value, valueY })
+      if (!this.live) return
+
+      const r = v => Math.round(v * 1000) / 1000
+      if (!this._pendingHostControls) this._pendingHostControls = {}
+      if (!this._pendingHostControls[seatId]) this._pendingHostControls[seatId] = {}
+      this._pendingHostControls[seatId][controlId] = { value: r(value), valueY: valueY !== undefined ? r(valueY) : undefined }
+
+      if (!this._hostRafId) {
+        this._hostRafId = requestAnimationFrame(() => {
+          for (const [sid, controls] of Object.entries(this._pendingHostControls)) {
+            const changes = Object.entries(controls).map(([id, d]) =>
+              d.valueY !== undefined ? [id, d.value, d.valueY] : [id, d.value]
+            )
+            api.session.controlBatch({ seatId: sid, changes })
+          }
+          this._pendingHostControls = {}
+          this._hostRafId = null
+        })
+      }
     },
 
     sendOsc(address, args) {
@@ -291,24 +309,10 @@ export const useHostStore = defineStore("host", {
 
     setupListeners() {
       api.relay.onEvent(({ event, data }) => {
-        if (event === "control:change") this.handleControlChange(data)
         if (event === "control:batch") this.handleControlBatch(data)
         if (event === "seat:taken") this.handleSeatTaken(data)
         if (event === "seat:released") this.handleSeatReleased(data)
       })
-    },
-
-    handleControlChange(data) {
-      const seat = this.session.seats.find(s => s.id === data.seatId)
-      const control = seat?.controls?.find(c => c.id === data.controlId)
-      if (!control) return
-
-      control.value = data.value
-      if (data.valueY !== undefined) control.valueY = data.valueY
-
-      const args = data.valueY !== undefined ? [data.value, data.valueY] : [data.value]
-      this.sendOsc(control.oscAddress, args)
-      this.sendControlMidi(control, data.value, data.valueY)
     },
 
     handleControlBatch(data) {
@@ -316,15 +320,15 @@ export const useHostStore = defineStore("host", {
       if (!seat) return
 
       for (const c of data.changes) {
-        const control = seat.controls.find(ctrl => ctrl.id === c.controlId)
+        const control = seat.controls.find(ctrl => ctrl.id === c[0])
         if (!control) continue
 
-        control.value = c.value
-        if (c.valueY !== undefined) control.valueY = c.valueY
+        control.value = c[1]
+        if (c[2] !== undefined) control.valueY = c[2]
 
-        const args = c.valueY !== undefined ? [c.value, c.valueY] : [c.value]
+        const args = c[2] !== undefined ? [c[1], c[2]] : [c[1]]
         this.sendOsc(control.oscAddress, args)
-        this.sendControlMidi(control, c.value, c.valueY)
+        this.sendControlMidi(control, c[1], c[2])
       }
     },
 

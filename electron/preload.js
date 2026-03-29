@@ -13,7 +13,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     update: (data) => ipcRenderer.invoke("session:update", data),
     close: () => ipcRenderer.invoke("session:close"),
     kick: (data) => ipcRenderer.invoke("session:kick", data),
-    controlChange: (data) => ipcRenderer.invoke("session:controlChange", data)
+    controlBatch: (data) => ipcRenderer.invoke("session:controlBatch", data)
   },
   osc: {
     connect: (config) => ipcRenderer.invoke("osc:connect", config),

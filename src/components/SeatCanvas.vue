@@ -15,8 +15,9 @@ export default {
   emits: ["control"],
   methods: {
     controlStyle,
-    onChange(c, value, valueY) {
-      this.$emit("control", c, value, valueY)
+    onChange(c, input) {
+      c.setValues(input)
+      this.$emit("control", c)
     }
   }
 }
@@ -28,16 +29,16 @@ export default {
       <XYPad
         v-if='c.type === "xy-pad"'
         :label='c.label'
-        :value-x='c.value ?? 0.5'
-        :value-y='c.valueY ?? 0.5'
+        :value-x='c.values.x ?? 0.5'
+        :value-y='c.values.y ?? 0.5'
         :min='c.min'
         :max='c.max'
-        @change='({ x, y }) => onChange(c, x, y)'
+        @change='v => onChange(c, v)'
       />
       <Fader
         v-else-if='c.type === "fader"'
         :label='c.label'
-        :value='c.value ?? 0'
+        :value='c.values.value ?? 0'
         :min='c.min'
         :max='c.max'
         :orientation='c.orientation'
@@ -52,7 +53,7 @@ export default {
       <Toggle
         v-else-if='c.type === "toggle"'
         :label='c.label'
-        :value='c.value ?? 0'
+        :value='c.values.value ?? 0'
         :on-value='c.onValue'
         :off-value='c.offValue'
         @change='v => onChange(c, v)'

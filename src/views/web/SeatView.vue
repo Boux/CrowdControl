@@ -36,8 +36,8 @@ export default {
       if (!this.session.session) return this.$router.push("/")
       this.$router.push(`/session/${this.session.session.id}`)
     },
-    onControl(control, value, valueY) {
-      this.session.sendControl(control.id, value, valueY)
+    onControl(control) {
+      this.session.sendControl(control)
     }
   }
 }

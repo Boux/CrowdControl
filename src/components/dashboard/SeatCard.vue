@@ -36,13 +36,9 @@ export default {
     recolor(e) {
       this.host.updateSeat(this.seat.id, { color: e.target.value })
     },
-    onControl(control, value, valueY) {
-      control.value = value
-      if (valueY !== undefined) control.valueY = valueY
-      const args = valueY !== undefined ? [value, valueY] : [value]
-      this.host.sendOsc(control.oscAddress, args)
-      this.host.sendControlMidi(control, value, valueY)
-      this.host.sendControlChange(this.seat.id, control.id, value, valueY)
+    onControl(control) {
+      this.host.sendControlOutput(control)
+      this.host.sendControlChange(this.seat.id, control)
     },
     duplicate() {
       const id = this.host.duplicateSeat(this.seat.id)

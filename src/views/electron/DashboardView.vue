@@ -1,5 +1,6 @@
 <script>
 import { useHostStore } from "../../stores/host"
+import { hydrateSeats } from "../../models/index"
 import SeatCard from "../../components/dashboard/SeatCard.vue"
 import SessionQr from "../../components/dashboard/SessionQr.vue"
 
@@ -53,7 +54,7 @@ export default {
         seats: this.seats.map(s => ({
           id: s.id, name: s.name, color: s.color,
           aspectW: s.aspectW, aspectH: s.aspectH,
-          controls: s.controls.map(c => ({ ...c, value: undefined, valueY: undefined }))
+          controls: s.controls.map(c => { const j = c.toJSON(); delete j.values; return j })
         }))
       }
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
@@ -74,6 +75,7 @@ export default {
         reader.onload = () => {
           const data = JSON.parse(reader.result)
           if (!data.seats) return alert("Invalid session file")
+          hydrateSeats(data.seats)
           this.host.session.seats = data.seats
           this.host.syncSession()
         }
@@ -84,15 +86,8 @@ export default {
     resendAll() {
       this.menuOpen = false
       for (const seat of this.seats)
-        for (const c of seat.controls) {
-          const val = c.value ?? c.min ?? 0
-          const valY = c.valueY ?? c.min ?? 0
-          if (c.oscAddress) {
-            const args = c.type === "xypad" ? [val, valY] : [val]
-            this.host.sendOsc(c.oscAddress, args)
-          }
-          this.host.sendControlMidi(c, val, valY)
-        }
+        for (const c of seat.controls)
+          this.host.sendControlOutput(c)
     },
     async goLive() {
       this.goingLive = true

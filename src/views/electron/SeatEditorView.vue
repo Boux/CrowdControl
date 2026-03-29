@@ -2,6 +2,7 @@
 import { useHostStore } from "../../stores/host"
 import { controlBounds } from "../../utils/layout.js"
 import { collectUsedMidi, collectUsedAddresses, assignMidi, nextAddress, buildControl } from "../../utils/control.js"
+import { createControl } from "../../models/index.js"
 import CanvasEditor from "../../components/editor/CanvasEditor.vue"
 import ControlPalette from "../../components/editor/ControlPalette.vue"
 import ControlSettings from "../../components/editor/ControlSettings.vue"
@@ -59,7 +60,7 @@ export default {
       this.redoStack = []
     },
     restoreSnapshot(snapshot) {
-      const parsed = JSON.parse(snapshot)
+      const parsed = JSON.parse(snapshot).map(c => createControl(c))
       this.seat.controls.splice(0, this.seat.controls.length, ...parsed)
       const ids = new Set(parsed.map(c => c.id))
       this.selectedIds = this.selectedIds.filter(id => ids.has(id))
@@ -103,7 +104,7 @@ export default {
       if (e.key === "Delete" || e.key === "Backspace") this.deleteControl()
     },
     cloneControl(src) {
-      const copy = JSON.parse(JSON.stringify(src))
+      const copy = src.clone()
       delete copy.id
       const usedAddresses = collectUsedAddresses(this.host.seats)
       if (copy.oscAddress) copy.oscAddress = nextAddress(copy.oscAddress, usedAddresses)

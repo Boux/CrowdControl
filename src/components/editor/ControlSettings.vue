@@ -27,7 +27,7 @@ export default {
         if (!c) return
         this._skipLocalWatch = true
         this._editSnapshotSaved = false
-        this.local = { ...c }
+        this.local = c.toJSON ? c.toJSON() : { ...c }
       }
     },
     local: {
@@ -100,17 +100,11 @@ export default {
     <table>
       <tr>
         <td>Ch</td>
-        <td colspan='3'><input type='number' min='1' max='16' step='1' :value='(local.midiChannel || 0) + 1' @change='local.midiChannel = +$event.target.value - 1' /></td>
+        <td colspan='3'><input type='number' min='1' max='16' step='1' :value='(local.channel || 0) + 1' @change='local.channel = +$event.target.value - 1' /></td>
       </tr>
-      <tr v-if='control.type === "xy-pad"'>
-        <td>CC X</td>
-        <td><input v-model.number='local.midiCC' type='number' min='0' max='127' step='1' /></td>
-        <td>CC Y</td>
-        <td><input v-model.number='local.midiCCY' type='number' min='0' max='127' step='1' /></td>
-      </tr>
-      <tr v-else>
-        <td>CC</td>
-        <td colspan='3'><input v-model.number='local.midiCC' type='number' min='0' max='127' step='1' /></td>
+      <tr v-for='(cc, key) in local.cc_num' :key='key'>
+        <td>CC {{ Object.keys(local.cc_num).length > 1 ? key.toUpperCase() : "" }}</td>
+        <td colspan='3'><input v-model.number='local.cc_num[key]' type='number' min='0' max='127' step='1' /></td>
       </tr>
     </table>
 

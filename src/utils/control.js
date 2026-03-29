@@ -1,4 +1,5 @@
 import { layoutDefaults } from "./layout.js"
+import { createControl } from "../models/index.js"
 
 export function nameToSlug(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")
@@ -7,10 +8,9 @@ export function nameToSlug(name) {
 export function collectUsedMidi(seats) {
   const used = new Set()
   for (const seat of seats)
-    for (const c of seat.controls) {
-      if (c.midiCC !== undefined) used.add(`${c.midiChannel || 0}:${c.midiCC}`)
-      if (c.midiCCY !== undefined) used.add(`${c.midiChannel || 0}:${c.midiCCY}`)
-    }
+    for (const c of seat.controls)
+      for (const { ch, cc } of c.getAllCCValues())
+        used.add(`${ch}:${cc}`)
   return used
 }
 
@@ -22,16 +22,12 @@ export function nextMidiSlot(usedMidi) {
 }
 
 export function assignMidi(control, usedMidi) {
-  if (control.midiCC === undefined) return
-  const slot = nextMidiSlot(usedMidi)
-  control.midiChannel = slot.ch
-  control.midiCC = slot.cc
-  usedMidi.add(`${slot.ch}:${slot.cc}`)
-  if (control.midiCCY !== undefined) {
-    const slotY = nextMidiSlot(usedMidi)
-    control.midiCCY = slotY.cc
-    if (control.midiChannel !== slotY.ch) control.midiChannel = slotY.ch
-    usedMidi.add(`${slotY.ch}:${slotY.cc}`)
+  for (const key of control.valueKeys) {
+    if (control.cc_num[key] == null) continue
+    const slot = nextMidiSlot(usedMidi)
+    control.cc_num[key] = slot.cc
+    control.channel = slot.ch
+    usedMidi.add(`${slot.ch}:${slot.cc}`)
   }
 }
 
@@ -55,19 +51,20 @@ export function nextAddress(base, usedAddresses) {
 export function buildControl(type, seatName, existingControls, usedMidi) {
   const baseName = nameToSlug(seatName)
   const count = existingControls.filter(c => c.type === type).length + 1
-  const slot = nextMidiSlot(usedMidi)
-  const midi = { midiChannel: slot.ch, midiCC: slot.cc }
-  usedMidi.add(`${slot.ch}:${slot.cc}`)
-  if (type === "xy-pad") {
-    const slotY = nextMidiSlot(usedMidi)
-    midi.midiCCY = slotY.cc
-    usedMidi.add(`${slotY.ch}:${slotY.cc}`)
+
+  const slot1 = nextMidiSlot(usedMidi)
+  usedMidi.add(`${slot1.ch}:${slot1.cc}`)
+
+  const base = {
+    "xy-pad": () => {
+      const slot2 = nextMidiSlot(usedMidi)
+      usedMidi.add(`${slot2.ch}:${slot2.cc}`)
+      return { label: "XY Pad", oscAddress: `/${baseName}/xy${count}`, cc_num: { x: slot1.cc, y: slot2.cc }, channel: slot1.ch }
+    },
+    "fader": () => ({ label: "Fader", oscAddress: `/${baseName}/fader${count}`, cc_num: { value: slot1.cc }, channel: slot1.ch, orientation: "vertical" }),
+    "button": () => ({ label: "Button", oscAddress: `/${baseName}/button${count}`, cc_num: { value: slot1.cc }, channel: slot1.ch, onValue: 1, offValue: 0 }),
+    "toggle": () => ({ label: "Toggle", oscAddress: `/${baseName}/toggle${count}`, cc_num: { value: slot1.cc }, channel: slot1.ch, onValue: 1, offValue: 0 })
   }
-  const defaults = {
-    "xy-pad": { label: "XY Pad", oscAddress: `/${baseName}/xy${count}`, min: 0, max: 1, value: 0.5, valueY: 0.5 },
-    "fader": { label: "Fader", oscAddress: `/${baseName}/fader${count}`, min: 0, max: 1, value: 0, orientation: "vertical" },
-    "button": { label: "Button", oscAddress: `/${baseName}/button${count}`, onValue: 1, offValue: 0 },
-    "toggle": { label: "Toggle", oscAddress: `/${baseName}/toggle${count}`, onValue: 1, offValue: 0, value: 0 }
-  }
-  return { type, ...defaults[type], ...layoutDefaults[type], ...midi }
+
+  return createControl({ type, ...base[type](), ...layoutDefaults[type] })
 }

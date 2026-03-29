@@ -5,12 +5,14 @@ export function attachRelay(httpServer) {
   const io = new Server(httpServer, { cors: { origin: "*" }, transports: ["websocket"] })
   const sessions = new Map()
 
-  function updateControlValue(session, data) {
-    const seat = session.seats.find(s => s.id === data.seatId)
-    const control = seat?.controls?.find(c => c.id === data.controlId)
-    if (!control) return
-    control.value = data.value
-    if (data.valueY !== undefined) control.valueY = data.valueY
+  function updateControlValue(session, seatId, wire) {
+    const seat = session.seats.find(s => s.id === seatId)
+    const control = seat?.controls?.find(c => c.id === wire[0])
+    if (!control || !control.values) return
+    const raw = wire[1]
+    const vals = Array.isArray(raw) ? raw : [raw]
+    const keys = Object.keys(control.values)
+    keys.forEach((k, i) => { if (vals[i] !== undefined) control.values[k] = vals[i] })
   }
 
   io.on("connection", (socket) => {
@@ -116,13 +118,7 @@ export function attachRelay(httpServer) {
       const isHost = session.hostSocketId === socket.id
       if (!isHost && !seatId) return
 
-      for (const c of changes) {
-        updateControlValue(session, { seatId, controlId: c[0], value: c[1], valueY: c[2] })
-      }
-
-      const room = isHost ? `seat:${sessionId}:${seatId}` : `host:${sessionId}`
-      const members = io.sockets.adapter.rooms.get(room)
-      console.log(`control:batch from ${isHost ? "host" : "client"}, room: ${room}, members: ${members?.size || 0}`)
+      for (const c of changes) updateControlValue(session, seatId, c)
 
       if (isHost) socket.to(`seat:${sessionId}:${seatId}`).emit("control:batch", { seatId, changes })
       else io.to(`host:${sessionId}`).emit("control:batch", { seatId, changes })

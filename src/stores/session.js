@@ -1,5 +1,7 @@
 import { defineStore } from "pinia"
 import { useRelayStore } from "./relay"
+import { hydrateSeats } from "../models/index"
+import Control from "../models/Control"
 
 export const useSessionStore = defineStore("session", {
   state: () => ({
@@ -18,8 +20,8 @@ export const useSessionStore = defineStore("session", {
     async join(sessionId) {
       const relay = useRelayStore()
       const response = await relay.emit("client:join", { sessionId })
-      console.log("client:join response, seats:", response.session?.seats?.length)
       this.session = response.session
+      hydrateSeats(this.session.seats)
       this.setupListeners()
       return response.session
     },
@@ -27,7 +29,7 @@ export const useSessionStore = defineStore("session", {
     async takeSeat(seatId) {
       const relay = useRelayStore()
       const response = await relay.emit("client:takeSeat", { sessionId: this.session.id, seatId })
-      this.currentSeat = response.seat
+      this.currentSeat = this.session.seats.find(s => s.id === seatId)
       this.startHeartbeat()
       return response.seat
     },
@@ -40,28 +42,19 @@ export const useSessionStore = defineStore("session", {
       this.currentSeat = null
     },
 
-    sendControl(controlId, value, valueY) {
-      // Optimistic local update - replace the control to ensure reactivity
-      const idx = this.currentSeat?.controls?.findIndex(c => c.id === controlId)
-      if (idx === -1 || idx === undefined) return
-      const control = this.currentSeat.controls[idx]
-      this.currentSeat.controls[idx] = { ...control, value, ...(valueY !== undefined && { valueY }) }
-
-      // Batch all control changes within a single animation frame into one message
+    sendControl(control) {
+      // setValues already called by SeatCanvas — just batch for network
       if (!this._pendingControls) this._pendingControls = {}
-      const r = v => Math.round(v * 1000) / 1000
-      this._pendingControls[controlId] = { value: r(value), valueY: valueY !== undefined ? r(valueY) : undefined }
+      this._pendingControls[control.id] = control.toWire()
 
-      if (!this._rafId) {
-        this._rafId = requestAnimationFrame(() => {
+      if (!this._sendTimer) {
+        this._sendTimer = setTimeout(() => {
           const relay = useRelayStore()
-          const changes = Object.entries(this._pendingControls).map(([id, d]) =>
-            d.valueY !== undefined ? [id, d.value, d.valueY] : [id, d.value]
-          )
+          const changes = Object.values(this._pendingControls)
           relay.emitNoAck("control:batch", { seatId: this.currentSeat.id, changes })
           this._pendingControls = {}
-          this._rafId = null
-        })
+          this._sendTimer = null
+        }, 50)
       }
     },
 
@@ -69,19 +62,17 @@ export const useSessionStore = defineStore("session", {
       const relay = useRelayStore()
 
       relay.on("session:updated", ({ session }) => {
-        console.log("session:updated received, seats:", session.seats?.length)
         this.session = session
+        hydrateSeats(this.session.seats)
         if (!this.currentSeat) return
         this.currentSeat = session.seats.find(s => s.id === this.currentSeat.id) || null
       })
 
       relay.on("control:batch", ({ seatId, changes }) => {
         if (!this.currentSeat || this.currentSeat.id !== seatId) return
-        for (const c of changes) {
-          const idx = this.currentSeat.controls.findIndex(ctrl => ctrl.id === c[0])
-          if (idx === -1) continue
-          const control = this.currentSeat.controls[idx]
-          this.currentSeat.controls[idx] = { ...control, value: c[1], ...(c[2] !== undefined && { valueY: c[2] }) }
+        for (const wire of changes) {
+          const control = this.currentSeat.controls.find(c => c.id === wire[0])
+          if (control) Control.fromWire(wire, control)
         }
       })
 

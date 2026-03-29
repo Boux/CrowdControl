@@ -1,6 +1,8 @@
 import { defineStore } from "pinia"
 import { nanoid } from "nanoid"
 import { nameToSlug, collectUsedMidi, collectUsedAddresses, assignMidi, nextAddress } from "../utils/control.js"
+import { createControl, hydrateSeats } from "../models/index.js"
+import Control from "../models/Control.js"
 
 const api = window.electronAPI
 
@@ -39,6 +41,7 @@ export const useHostStore = defineStore("host", {
   },
 
   actions: {
+    // Settings
     saveSettings(settings) {
       this.settings = settings
       localStorage.setItem("crowdosc:settings", JSON.stringify(settings))
@@ -47,6 +50,7 @@ export const useHostStore = defineStore("host", {
       else this.disconnectMidi()
     },
 
+    // Relay
     async connectRelay(url) {
       const result = await api.relay.connect(url)
       this.connected = result.success
@@ -72,7 +76,6 @@ export const useHostStore = defineStore("host", {
 
       const seats = JSON.parse(JSON.stringify(this.session.seats))
       api.session.update({ seats })
-
       this.live = true
       return { success: true }
     },
@@ -84,14 +87,16 @@ export const useHostStore = defineStore("host", {
       this.live = false
     },
 
+    // Session
     createSession(name) {
       this.session = { id: nanoid(8), name, seats: [] }
       this.saveActiveSession()
       this.saveToRecent()
     },
 
+    // Seats
     addSeat(name, color) {
-      if (!this.session) return console.error("addSeat: no session")
+      if (!this.session) return
       const seat = { id: nanoid(8), name, color, controls: [], occupiedBy: null, aspectW: 9, aspectH: 19.5 }
       this.session.seats.push(seat)
       this.syncSession()
@@ -126,12 +131,14 @@ export const useHostStore = defineStore("host", {
       const oldSlug = nameToSlug(seat.name)
       const newSlug = nameToSlug(copy.name)
 
-      copy.controls.forEach(c => {
-        c.id = nanoid(8)
-        if (c.oscAddress && oldSlug && newSlug && c.oscAddress.startsWith("/" + oldSlug + "/"))
-          c.oscAddress = "/" + newSlug + c.oscAddress.slice(oldSlug.length + 1)
-        if (c.oscAddress) c.oscAddress = nextAddress(c.oscAddress, usedAddresses)
-        assignMidi(c, usedMidi)
+      copy.controls = copy.controls.map(c => {
+        const ctrl = createControl(c)
+        ctrl.id = nanoid(8)
+        if (ctrl.oscAddress && oldSlug && newSlug && ctrl.oscAddress.startsWith("/" + oldSlug + "/"))
+          ctrl.oscAddress = "/" + newSlug + ctrl.oscAddress.slice(oldSlug.length + 1)
+        if (ctrl.oscAddress) ctrl.oscAddress = nextAddress(ctrl.oscAddress, usedAddresses)
+        assignMidi(ctrl, usedMidi)
+        return ctrl
       })
 
       this.session.seats.push(copy)
@@ -150,13 +157,14 @@ export const useHostStore = defineStore("host", {
       if (seat) seat.occupiedBy = null
     },
 
+    // Controls
     addControl(seatId, control) {
       const seat = this.session.seats.find(s => s.id === seatId)
       if (!seat) return
-      const id = nanoid(8)
-      seat.controls.push({ id, ...control })
+      control.id = nanoid(8)
+      seat.controls.push(control)
       this.syncSession()
-      return id
+      return control.id
     },
 
     updateControl(seatId, controlId, data) {
@@ -174,6 +182,7 @@ export const useHostStore = defineStore("host", {
       this.syncSession()
     },
 
+    // Persistence
     syncSession() {
       this.saveActiveSession()
       this.saveToRecent()
@@ -195,7 +204,10 @@ export const useHostStore = defineStore("host", {
     loadActiveSession() {
       try {
         const raw = localStorage.getItem("crowdosc:active")
-        return raw ? JSON.parse(raw) : null
+        if (!raw) return null
+        const saved = JSON.parse(raw)
+        if (saved?.seats) hydrateSeats(saved.seats)
+        return saved
       } catch { return null }
     },
 
@@ -206,7 +218,7 @@ export const useHostStore = defineStore("host", {
         name: this.session.name,
         seats: this.session.seats.map(s => ({
           id: s.id, name: s.name, color: s.color,
-          controls: s.controls.map(c => ({ ...c, value: undefined, valueY: undefined }))
+          controls: s.controls.map(c => { const j = c.toJSON(); delete j.values; return j })
         })),
         savedAt: Date.now()
       }
@@ -218,9 +230,8 @@ export const useHostStore = defineStore("host", {
     },
 
     getRecent() {
-      try {
-        return JSON.parse(localStorage.getItem("crowdosc:recent")) || []
-      } catch { return [] }
+      try { return JSON.parse(localStorage.getItem("crowdosc:recent")) || [] }
+      catch { return [] }
     },
 
     deleteRecent(index) {
@@ -229,41 +240,41 @@ export const useHostStore = defineStore("host", {
       localStorage.setItem("crowdosc:recent", JSON.stringify(recent))
     },
 
-    async connectOsc() {
-      if (!this.settings.osc.enabled) return { success: false }
-      const config = { ...this.settings.osc }
-      const result = await api.osc.connect(config)
-      this.oscConnected = result.success
-      return result
+    // Output
+    sendControlOutput(control) {
+      if (this.settings.osc.enabled && this.oscConnected) {
+        const args = control.getOSCArgs()
+        api.osc.send(control.oscAddress, args)
+        this.oscLogs.unshift({ address: control.oscAddress, args: args.map(v => v.toFixed(2)).join(", "), time: Date.now() })
+        if (this.oscLogs.length > 50) this.oscLogs.pop()
+      }
+      if (this.settings.midi.enabled && this.midiConnected)
+        for (const { ch, cc, value } of control.getAllCCValues())
+          api.midi.send(ch, cc, Math.round(value * 127))
     },
 
-    sendControlChange(seatId, controlId, value, valueY) {
+    sendControlChange(seatId, control) {
       if (!this.live) return
-
-      const r = v => Math.round(v * 1000) / 1000
       if (!this._pendingHostControls) this._pendingHostControls = {}
       if (!this._pendingHostControls[seatId]) this._pendingHostControls[seatId] = {}
-      this._pendingHostControls[seatId][controlId] = { value: r(value), valueY: valueY !== undefined ? r(valueY) : undefined }
+      this._pendingHostControls[seatId][control.id] = control.toWire()
 
       if (!this._hostRafId) {
         this._hostRafId = requestAnimationFrame(() => {
-          for (const [sid, controls] of Object.entries(this._pendingHostControls)) {
-            const changes = Object.entries(controls).map(([id, d]) =>
-              d.valueY !== undefined ? [id, d.value, d.valueY] : [id, d.value]
-            )
-            api.session.controlBatch({ seatId: sid, changes })
-          }
+          for (const [sid, controls] of Object.entries(this._pendingHostControls))
+            api.session.controlBatch({ seatId: sid, changes: Object.values(controls) })
           this._pendingHostControls = {}
           this._hostRafId = null
         })
       }
     },
 
-    sendOsc(address, args) {
-      if (!this.settings.osc.enabled) return
-      api.osc.send(address, args)
-      this.oscLogs.unshift({ address, args: args.map(v => v.toFixed(2)).join(", "), time: Date.now() })
-      if (this.oscLogs.length > 50) this.oscLogs.pop()
+    // Connections
+    async connectOsc() {
+      if (!this.settings.osc.enabled) return { success: false }
+      const result = await api.osc.connect({ ...this.settings.osc })
+      this.oscConnected = result.success
+      return result
     },
 
     async getMidiOutputs() {
@@ -286,30 +297,7 @@ export const useHostStore = defineStore("host", {
       this.midiConnected = false
     },
 
-    sendMidi(channel, controller, value) {
-      if (!api?.midi) return
-      api.midi.send(channel, controller, value)
-    },
-
-    sendControlMidi(control, value, valueY) {
-      if (!this.settings.midi.enabled) return
-      if (!this.midiConnected || control.midiCC === undefined) return
-      const ch = control.midiChannel || 0
-      const toMidi = (v) => Math.round(v * 127)
-      if (control.type === "button" || control.type === "toggle") {
-        this.sendMidi(ch, control.midiCC, value > 0 ? 127 : 0)
-        return
-      }
-      const min = control.min ?? 0
-      const max = control.max ?? 1
-      const norm = (value - min) / (max - min)
-      this.sendMidi(ch, control.midiCC, toMidi(norm))
-      if (control.midiCCY !== undefined && valueY !== undefined) {
-        const normY = (valueY - min) / (max - min)
-        this.sendMidi(ch, control.midiCCY, toMidi(normY))
-      }
-    },
-
+    // Relay listeners
     setupListeners() {
       api.relay.onEvent(({ event, data }) => {
         if (event === "control:batch") this.handleControlBatch(data)
@@ -321,17 +309,11 @@ export const useHostStore = defineStore("host", {
     handleControlBatch(data) {
       const seat = this.session.seats.find(s => s.id === data.seatId)
       if (!seat) return
-
-      for (const c of data.changes) {
-        const control = seat.controls.find(ctrl => ctrl.id === c[0])
+      for (const wire of data.changes) {
+        const control = seat.controls.find(c => c.id === wire[0])
         if (!control) continue
-
-        control.value = c[1]
-        if (c[2] !== undefined) control.valueY = c[2]
-
-        const args = c[2] !== undefined ? [c[1], c[2]] : [c[1]]
-        this.sendOsc(control.oscAddress, args)
-        this.sendControlMidi(control, c[1], c[2])
+        Control.fromWire(wire, control)
+        this.sendControlOutput(control)
       }
     },
 

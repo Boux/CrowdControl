@@ -1,5 +1,6 @@
 <script>
 import { useHostStore } from "../../stores/host"
+import { hydrateSeats } from "../../models/index"
 
 export default {
   name: "SetupView",
@@ -21,6 +22,7 @@ export default {
       await this.host.connectMidi()
 
       if (Array.isArray(restoreSeats)) {
+        hydrateSeats(restoreSeats)
         this.host.session.seats = restoreSeats
         this.host.syncSession()
       }

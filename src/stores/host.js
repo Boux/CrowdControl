@@ -1,7 +1,7 @@
 import { defineStore } from "pinia"
 import { nanoid } from "nanoid"
 import { nameToSlug, collectUsedMidi, collectUsedAddresses, assignMidi, nextAddress } from "../utils/control.js"
-import { MIDI_MAX, MAX_LOG_ENTRIES } from "../constants.js"
+import { MIDI_MAX, MAX_LOG_ENTRIES, DEFAULT_RELAY_SERVER } from "../constants.js"
 import { createControl, hydrateSeats } from "../models/index.js"
 import Control from "../models/Control.js"
 
@@ -9,7 +9,7 @@ const api = window.electronAPI
 
 const defaultSettings = {
   osc: { enabled: true, host: "127.0.0.1", port: 9000, protocol: "udp" },
-  relay: { url: "https://crowdcontrol-production.up.railway.app", servers: ["https://crowdcontrol-production.up.railway.app"] },
+  relay: { url: DEFAULT_RELAY_SERVER, servers: [DEFAULT_RELAY_SERVER] },
   midi: { enabled: false, device: "" }
 }
 

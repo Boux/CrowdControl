@@ -2,7 +2,8 @@
 import { useHostStore } from "../../stores/host"
 import { io } from "socket.io-client"
 
-const DEFAULT_SERVERS = ["https://crowdcontrol-production.up.railway.app"]
+import { DEFAULT_RELAY_SERVER } from "../../constants"
+const DEFAULT_SERVERS = [DEFAULT_RELAY_SERVER]
 
 export default {
   name: "SettingsView",

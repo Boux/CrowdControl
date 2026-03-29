@@ -8,9 +8,9 @@ import Control from "../models/Control.js"
 const api = window.electronAPI
 
 const defaultSettings = {
-  osc: { enabled: true, host: "127.0.0.1", port: 9000, protocol: "udp" },
+  osc: { enabled: false, host: "127.0.0.1", port: 9000, protocol: "udp" },
   relay: { url: DEFAULT_RELAY_SERVER, servers: [DEFAULT_RELAY_SERVER] },
-  midi: { enabled: false, device: "" }
+  midi: { enabled: true, device: "" }
 }
 
 function loadSettings() {

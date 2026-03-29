@@ -40,7 +40,8 @@ export default {
   background: #1a1a2e
   color: #fff
   font-size: 0.75rem
-  font-weight: 500
+  font-weight: 600
+  text-shadow: 0 1px 2px black
   cursor: pointer
   touch-action: manipulation
   user-select: none

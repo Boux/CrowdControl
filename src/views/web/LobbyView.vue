@@ -45,7 +45,7 @@ export default {
     <div v-if='loading' class='center'>Connecting...</div>
     <div v-else-if='error' class='center'>
       <p class='error'>{{ error }}</p>
-      <IconButton icon='arrow-left' to='/' class='back-btn'>Back to Home</IconButton>
+      <IconButton icon='arrow-left' class='back-btn' @click='session.clear(); $router.push("/")'>Back to Home</IconButton>
     </div>
     <template v-else>
       <header>

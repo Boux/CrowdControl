@@ -117,9 +117,10 @@ export default {
   right: 0
   text-align: center
   font-size: 0.75rem
-  font-weight: 500
+  font-weight: 600
+  color: white
+  text-shadow: 0 1px 2px black
   pointer-events: none
-  opacity: 0.7
 
 .val
   position: absolute
@@ -128,6 +129,8 @@ export default {
   right: 0
   text-align: center
   font-size: 0.625rem
-  color: #888
+  font-weight: 500
+  color: white
+  text-shadow: 0 1px 2px black
   pointer-events: none
 </style>

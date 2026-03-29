@@ -175,8 +175,6 @@ export default {
       />
     </header>
 
-    <ControlPalette @add='addControl' />
-
     <div class='layout'>
       <div class='canvas-wrap'>
         <CanvasEditor
@@ -195,19 +193,22 @@ export default {
             <OscButton v-else-if='item.type === "button"' :label='item.label' />
             <Toggle v-else-if='item.type === "toggle"' :label='item.label' :value='0' :on-value='item.onValue' :off-value='item.offValue' />
           </template>
-          <template #empty>Add controls above</template>
+          <template #empty>Click a control type to add it</template>
         </CanvasEditor>
       </div>
 
-      <div class='settings'>
-        <ControlSettings
-          v-if='selectedControl && selectedIds.length === 1'
-          :control='selectedControl'
-          @update='onControlUpdate'
-          @duplicate='duplicateControl'
-          @delete='deleteControl'
-        />
-        <SeatSettings v-else-if='seat' :seat='seat' @set-aspect='setAspect' />
+      <div class='sidebar'>
+        <ControlPalette @add='addControl' />
+        <div class='settings'>
+          <ControlSettings
+            v-if='selectedControl && selectedIds.length === 1'
+            :control='selectedControl'
+            @update='onControlUpdate'
+            @duplicate='duplicateControl'
+            @delete='deleteControl'
+          />
+          <SeatSettings v-else-if='seat' :seat='seat' @set-aspect='setAspect' />
+        </div>
       </div>
     </div>
   </div>
@@ -281,8 +282,6 @@ header
 .layout
   display: flex
   gap: 1.5rem
-  margin-top: 1.5rem
-  align-items: flex-start
   flex: 1
   min-height: 0
 
@@ -299,9 +298,14 @@ header
   border: 2px solid #333
   border-radius: 24px
 
-.settings
+.sidebar
   width: 260px
   flex-shrink: 0
+  display: flex
+  flex-direction: column
+  gap: 0.75rem
+
+.settings
   background: #1a1a2e
   border-radius: 8px
   padding: 0.75rem

@@ -14,7 +14,7 @@ export default class Control {
     this.channel = data.channel ?? 0
     this.cc_num = data.cc_num ? { ...data.cc_num } : {}
     this.values = data.values ? { ...data.values } : {}
-    this.interpolatedValues = { ...this.values }
+    this.interpolatedValues = null
     this._interpInterval = null
     this._interpStart = 0
     this._interpDuration = 0
@@ -36,6 +36,8 @@ export default class Control {
     } else {
       Object.assign(this.values, input)
     }
+
+    if (!this.interpolatedValues) this.interpolatedValues = { ...this.values }
 
     if (!interp) {
       this.stopInterp()
@@ -69,14 +71,16 @@ export default class Control {
   }
 
   getOSCArgs() {
-    return this.valueKeys.map(k => this.interpolatedValues[k] ?? 0)
+    const v = this.interpolatedValues || this.values
+    return this.valueKeys.map(k => v[k] ?? 0)
   }
 
   getAllCCValues() {
+    const v = this.interpolatedValues || this.values
     const result = []
     for (const key of this.valueKeys) {
       if (this.cc_num[key] == null) continue
-      result.push({ ch: this.channel, cc: this.cc_num[key], value: this._normalize(this.interpolatedValues[key] ?? 0) })
+      result.push({ ch: this.channel, cc: this.cc_num[key], value: this._normalize(v[key] ?? 0) })
     }
     return result
   }

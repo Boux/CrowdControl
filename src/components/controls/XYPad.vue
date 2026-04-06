@@ -9,7 +9,7 @@ export default {
     max: { type: Number, default: 1 }
   },
   emits: ["change"],
-  data: () => ({ touching: false }),
+  data: () => ({ touching: false, axis: null }),
   computed: {
     indicatorStyle() {
       const x = ((this.valueX - this.min) / (this.max - this.min)) * 100
@@ -19,9 +19,10 @@ export default {
   },
   methods: {
     start(e) {
-      e.preventDefault()
+      if (e.button === 2) e.preventDefault()
       e.target.setPointerCapture(e.pointerId)
       this.touching = true
+      this.axis = e.button === 1 ? "x" : e.button === 2 ? "y" : null
       this.update(e)
     },
     move(e) {
@@ -37,9 +38,9 @@ export default {
       const rect = this.$el.getBoundingClientRect()
       const px = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
       const py = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height))
-      const x = px * (this.max - this.min) + this.min
-      const y = (1 - py) * (this.max - this.min) + this.min
-      if (x !== this.valueX || y !== this.valueY) this.$emit("change", [x, y])
+      const x = this.axis === "y" ? this.valueX : px * (this.max - this.min) + this.min
+      const y = this.axis === "x" ? this.valueY : (1 - py) * (this.max - this.min) + this.min
+      if (x !== this.valueX || y !== this.valueY) this.$emit("change", [x, y], this.axis)
     }
   }
 }
@@ -53,6 +54,7 @@ export default {
     @pointermove='move'
     @pointerup='end'
     @pointercancel='end'
+    @contextmenu.prevent
   >
     <div class='grid'></div>
     <div class='indicator' :style='indicatorStyle'></div>

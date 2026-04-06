@@ -16,9 +16,9 @@ export default {
   emits: ["control", "learn"],
   methods: {
     controlStyle,
-    onChange(c, input) {
+    onChange(c, input, axis) {
       c.setValues(input)
-      this.$emit("control", c)
+      this.$emit("control", c, axis ? [axis] : null)
     }
   }
 }
@@ -34,7 +34,7 @@ export default {
         :value-y='c.interpolatedValues?.y ?? c.values.y ?? 0.5'
         :min='c.min'
         :max='c.max'
-        @change='v => onChange(c, v)'
+        @change='(v, axis) => onChange(c, v, axis)'
       />
       <Fader
         v-else-if='c.type === "fader"'

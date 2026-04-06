@@ -271,7 +271,7 @@ export const useHostStore = defineStore("host", {
       }
     },
 
-    sendControlOutput(control) {
+    sendControlOutput(control, keys) {
       if (this.settings.osc.enabled && this.oscConnected) {
         const args = control.getOSCArgs()
         api.osc.send(control.oscAddress, args)
@@ -279,7 +279,8 @@ export const useHostStore = defineStore("host", {
         if (this.oscLogs.length > MAX_LOG_ENTRIES) this.oscLogs.pop()
       }
       if (this.settings.midi.enabled && this.midiConnected)
-        for (const { ch, cc, value } of control.getAllCCValues()) {
+        for (const { ch, cc, value, key } of control.getAllCCValues()) {
+          if (keys && !keys.includes(key)) continue
           const midiVal = Math.round(value * MIDI_MAX)
           api.midi.send(ch, cc, midiVal)
           this.midiLogs.unshift({ ch, cc, value: midiVal, time: Date.now() })

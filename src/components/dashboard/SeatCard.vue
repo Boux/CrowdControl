@@ -37,8 +37,8 @@ export default {
     recolor(e) {
       this.host.updateSeat(this.seat.id, { color: e.target.value })
     },
-    onControl(control) {
-      this.host.sendControlOutput(control)
+    onControl(control, keys) {
+      this.host.sendControlOutput(control, keys)
       this.host.sendControlChange(this.seat.id, control)
     },
     onLearn(control, key) {

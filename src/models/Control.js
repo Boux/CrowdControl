@@ -80,7 +80,7 @@ export default class Control {
     const result = []
     for (const key of this.valueKeys) {
       if (this.cc_num[key] == null) continue
-      result.push({ ch: this.channel, cc: this.cc_num[key], value: this._normalize(v[key] ?? 0) })
+      result.push({ key, ch: this.channel, cc: this.cc_num[key], value: this._normalize(v[key] ?? 0) })
     }
     return result
   }

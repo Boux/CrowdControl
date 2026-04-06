@@ -18,14 +18,14 @@ export default {
     async start(restoreSeats) {
       this.host.createSession(this.sessionName.trim())
 
-      await this.host.connectOsc()
-      await this.host.connectMidi()
-
       if (Array.isArray(restoreSeats)) {
         hydrateSeats(restoreSeats)
         this.host.session.seats = restoreSeats
         this.host.syncSession()
       }
+
+      await this.host.connectOsc()
+      await this.host.connectMidi()
 
       this.$router.push("/dashboard")
     },

@@ -8,7 +8,8 @@ export const useSessionStore = defineStore("session", {
   state: () => ({
     session: null,
     currentSeat: null,
-    error: null
+    error: null,
+    _reconnecting: false
   }),
 
   getters: {
@@ -66,7 +67,9 @@ export const useSessionStore = defineStore("session", {
         this.session = session
         hydrateSeats(this.session.seats)
         if (!this.currentSeat) return
-        this.currentSeat = session.seats.find(s => s.id === this.currentSeat.id) || null
+        const found = session.seats.find(s => s.id === this.currentSeat.id)
+        if (found) this.currentSeat = found
+        else if (!this._reconnecting) this.currentSeat = null
       })
 
       relay.on("control:batch", ({ seatId, changes }) => {
@@ -89,6 +92,7 @@ export const useSessionStore = defineStore("session", {
 
       relay.on("connect", async () => {
         if (!this.session) return
+        this._reconnecting = true
         try {
           await relay.emit("client:join", { sessionId: this.session.id })
           if (this.currentSeat) {
@@ -99,6 +103,7 @@ export const useSessionStore = defineStore("session", {
           this.session = null
           this.currentSeat = null
         }
+        this._reconnecting = false
       })
     },
 

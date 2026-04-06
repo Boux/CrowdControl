@@ -86,9 +86,18 @@ export function attachRelay(httpServer) {
 
       const seat = session.seats.find(s => s.id === data.seatId)
       if (!seat) return callback({ success: false, error: "Seat not found" })
-      if (seat.occupiedBy && seat.occupiedBy !== socket.id) return callback({ success: false, error: "Seat taken" })
+
+      if (seat.occupiedBy && seat.occupiedBy !== socket.id) {
+        // Check if the occupying socket is still connected; if not, release it
+        const occupyingSocket = io.sockets.sockets.get(seat.occupiedBy)
+        if (occupyingSocket && occupyingSocket.connected)
+          return callback({ success: false, error: "Seat taken" })
+        // Previous occupant disconnected — clear stale occupation
+        seat.occupiedBy = null
+      }
 
       seat.occupiedBy = socket.id
+      seat.lastHeartbeat = Date.now()
       socket.data.seatId = data.seatId
       socket.join(`seat:${data.sessionId}:${data.seatId}`)
       io.to(`host:${data.sessionId}`).emit("seat:taken", { seatId: seat.id, socketId: socket.id })

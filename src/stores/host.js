@@ -61,6 +61,7 @@ export const useHostStore = defineStore("host", {
     },
 
     disconnectRelay() {
+      this.saveToRecent()
       api.relay.disconnect()
       this.connected = false
       this.live = false
@@ -93,7 +94,6 @@ export const useHostStore = defineStore("host", {
     createSession(name) {
       this.session = { id: nanoid(8), name, seats: [] }
       this.saveActiveSession()
-      this.saveToRecent()
     },
 
     // Seats

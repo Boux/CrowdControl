@@ -17,7 +17,7 @@ export default {
   },
   watch: {
     seat(val) {
-      if (!val) this.leave()
+      if (!val && !this.session._reconnecting) this.leave()
     }
   },
   mounted() {

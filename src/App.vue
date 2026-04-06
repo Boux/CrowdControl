@@ -38,12 +38,14 @@ html, body
   font-family: var(--font-ui)
   background: var(--bg-base)
   color: var(--text)
-  min-height: 100vh
+  height: 100%
+  overflow: hidden
   -webkit-font-smoothing: antialiased
   font-feature-settings: "cv11", "ss01"
 
 #app
-  min-height: 100vh
+  height: 100%
+  overflow: hidden
 
 ::-webkit-scrollbar
   width: 6px

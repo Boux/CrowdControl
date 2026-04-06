@@ -85,10 +85,11 @@ export default {
 
 <style lang='sass' scoped>
 .lobby
-  min-height: 100vh
+  height: 100dvh
   padding: 1rem
   max-width: 500px
   margin: 0 auto
+  overflow-y: auto
 
 header
   display: flex

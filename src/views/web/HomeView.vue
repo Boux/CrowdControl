@@ -89,9 +89,10 @@ export default {
   flex-direction: column
   align-items: center
   justify-content: center
-  min-height: 100vh
+  height: 100dvh
   padding: 2rem
   text-align: center
+  overflow: hidden
 
 h1
   font-size: 2.5rem

@@ -13,7 +13,8 @@ export default {
     menuOpen: false,
     oscLogOpen: false,
     midiLogOpen: false,
-    learnMode: false
+    learnMode: false,
+    sweepValue: 0
   }),
   computed: {
     host() { return useHostStore() },
@@ -47,6 +48,10 @@ export default {
     if (!this.host.midiConnected) await this.host.connectMidi()
   },
   methods: {
+    onSweep(e) {
+      this.sweepValue = +e.target.value
+      this.host.sendAllCCs(this.sweepValue)
+    },
     addSeat() {
       const n = this.seats.length + 1
       this.newSeatId = this.host.addSeat(`Seat ${n}`, "#3498db")
@@ -147,6 +152,20 @@ export default {
               </div>
             </div>
           </div>
+        </div>
+
+        <div v-if='learnMode' class='sweep-bar'>
+          <span class='sweep-label'>Sweep All CCs</span>
+          <input
+            type='range'
+            min='0'
+            max='127'
+            :value='sweepValue'
+            class='sweep-fader'
+            @input='onSweep'
+          />
+          <span class='sweep-value'>{{ sweepValue }}</span>
+          <IconButton icon='send' class='send-all' @click='host.sendAllCCs()'>Send All</IconButton>
         </div>
 
         <div class='seats-grid'>
@@ -342,6 +361,44 @@ header
     background: #e67e22
     border-color: #e67e22
     color: white
+
+.sweep-bar
+  display: flex
+  align-items: center
+  gap: 0.75rem
+  padding: 0.5rem 0.75rem
+  background: #1a1a2e
+  border-radius: 6px
+  margin-bottom: 1rem
+
+.sweep-label
+  font-size: 0.75rem
+  color: #888
+  white-space: nowrap
+
+.sweep-fader
+  flex: 1
+  accent-color: #e67e22
+
+.sweep-value
+  font-size: 0.75rem
+  color: #e67e22
+  font-weight: 700
+  min-width: 2rem
+  text-align: right
+
+.send-all
+  padding: 0.4rem 0.75rem
+  background: #e67e22
+  border: none
+  border-radius: 4px
+  color: white
+  font-size: 0.7rem
+  cursor: pointer
+  white-space: nowrap
+
+  &:hover
+    background: #f39c12
 
 .seats-grid
   display: grid

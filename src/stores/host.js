@@ -243,6 +243,15 @@ export const useHostStore = defineStore("host", {
     },
 
     // Output
+    sendAllCCs(midiVal) {
+      if (!this.settings.midi.enabled || !this.midiConnected) return
+      for (const seat of this.seats)
+        for (const c of seat.controls)
+          for (const { ch, cc, value } of c.getAllCCValues()) {
+            api.midi.send(ch, cc, midiVal ?? Math.round(value * MIDI_MAX))
+          }
+    },
+
     sendSingleCC(control, key) {
       const v = control.interpolatedValues || control.values
       const cc = control.cc_num[key]

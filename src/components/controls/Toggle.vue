@@ -36,7 +36,6 @@ export default {
   height: 100%
   padding: 0
   border: none
-  border-radius: 8px
   background: #1a1a2e
   color: #fff
   font-size: 0.75rem

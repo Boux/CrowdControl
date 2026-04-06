@@ -66,7 +66,6 @@ export default {
   width: 100%
   height: 100%
   background: #1a1a2e
-  border-radius: 8px
   touch-action: none
   cursor: pointer
   overflow: hidden
@@ -82,13 +81,11 @@ export default {
     bottom: 0
     left: 0
     right: 0
-    border-radius: 0 0 8px 8px
 
   .horizontal &
     top: 0
     bottom: 0
     left: 0
-    border-radius: 8px 0 0 8px
 
 .handle
   position: absolute

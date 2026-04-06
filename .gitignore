@@ -15,6 +15,7 @@ server/prisma/*.db
 server/prisma/*.db-journal
 dist
 dist-electron
+release
 dist-ssr
 *.local
 

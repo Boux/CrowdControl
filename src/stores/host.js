@@ -243,6 +243,25 @@ export const useHostStore = defineStore("host", {
     },
 
     // Output
+    sendSingleCC(control, key) {
+      const v = control.interpolatedValues || control.values
+      const cc = control.cc_num[key]
+      if (cc == null) return
+      const value = control._normalize(v[key] ?? 0)
+      if (this.settings.midi.enabled && this.midiConnected) {
+        const midiVal = Math.round(value * MIDI_MAX)
+        api.midi.send(control.channel, cc, midiVal)
+        this.midiLogs.unshift({ ch: control.channel, cc, value: midiVal, time: Date.now() })
+        if (this.midiLogs.length > MAX_LOG_ENTRIES) this.midiLogs.pop()
+      }
+      if (this.settings.osc.enabled && this.oscConnected) {
+        const args = control.getOSCArgs()
+        api.osc.send(control.oscAddress, args)
+        this.oscLogs.unshift({ address: control.oscAddress, args: args.map(v => v.toFixed(2)).join(", "), time: Date.now() })
+        if (this.oscLogs.length > MAX_LOG_ENTRIES) this.oscLogs.pop()
+      }
+    },
+
     sendControlOutput(control) {
       if (this.settings.osc.enabled && this.oscConnected) {
         const args = control.getOSCArgs()

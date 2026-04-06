@@ -12,7 +12,8 @@ export default {
     goingLive: false,
     menuOpen: false,
     oscLogOpen: false,
-    midiLogOpen: false
+    midiLogOpen: false,
+    learnMode: false
   }),
   computed: {
     host() { return useHostStore() },
@@ -136,6 +137,7 @@ export default {
           <h2>Seats ({{ seats.length }})</h2>
           <div class='section-actions'>
             <IconButton icon='plus' class='add' @click='addSeat'>Add Seat</IconButton>
+            <IconButton icon='sliders-vertical' class='learn' :class='{ active: learnMode }' @click='learnMode = !learnMode'>Learn</IconButton>
             <div class='menu-wrap' ref='menuWrap'>
               <IconButton icon='ellipsis-vertical' class='menu-btn' @click='menuOpen = !menuOpen' />
               <div v-if='menuOpen' class='menu-dropdown'>
@@ -148,7 +150,7 @@ export default {
         </div>
 
         <div class='seats-grid'>
-          <SeatCard v-for='seat in seats' :key='seat.id' :seat='seat' :auto-rename='seat.id === newSeatId' @duplicate='id => newSeatId = id' />
+          <SeatCard v-for='seat in seats' :key='seat.id' :seat='seat' :auto-rename='seat.id === newSeatId' :learn-mode='learnMode' @duplicate='id => newSeatId = id' />
         </div>
       </div>
     </div>
@@ -323,6 +325,23 @@ header
   border-radius: 6px
   color: white
   cursor: pointer
+
+.learn
+  padding: 0.5rem 1rem
+  background: transparent
+  border: 1px solid #333
+  border-radius: 6px
+  color: #888
+  cursor: pointer
+
+  &:hover
+    border-color: #e67e22
+    color: #e67e22
+
+  &.active
+    background: #e67e22
+    border-color: #e67e22
+    color: white
 
 .seats-grid
   display: grid

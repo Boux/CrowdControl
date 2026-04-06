@@ -10,9 +10,10 @@ export default {
   components: { XYPad, Fader, OscButton, Toggle },
   props: {
     controls: { type: Array, default: () => [] },
-    accent: { type: String, default: null }
+    accent: { type: String, default: null },
+    learnMode: { type: Boolean, default: false }
   },
-  emits: ["control"],
+  emits: ["control", "learn"],
   methods: {
     controlStyle,
     onChange(c, input) {
@@ -58,6 +59,14 @@ export default {
         :off-value='c.offValue'
         @change='v => onChange(c, v)'
       />
+      <div v-if='learnMode' class='learn-overlay'>
+        <button
+          v-for='key in c.valueKeys'
+          :key='key'
+          class='cc-btn'
+          @click.stop='$emit("learn", c, key)'
+        >CC {{ c.cc_num[key] }}</button>
+      </div>
     </div>
   </div>
 </template>
@@ -75,4 +84,27 @@ export default {
     > *
       width: 100%
       height: 100%
+
+  .learn-overlay
+    position: absolute
+    inset: 0
+    background: rgba(0, 0, 0, 0.7)
+    display: flex
+    align-items: center
+    justify-content: center
+    gap: 4px
+    z-index: 1
+
+  .cc-btn
+    padding: 4px 8px
+    background: #e67e22
+    border: none
+    color: white
+    font-size: 0.65rem
+    font-weight: 700
+    cursor: pointer
+    white-space: nowrap
+
+    &:hover
+      background: #f39c12
 </style>

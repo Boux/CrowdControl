@@ -7,7 +7,8 @@ export default {
   components: { SeatCanvas },
   props: {
     seat: { type: Object, required: true },
-    autoRename: { type: Boolean, default: false }
+    autoRename: { type: Boolean, default: false },
+    learnMode: { type: Boolean, default: false }
   },
   emits: ["duplicate"],
   data: () => ({
@@ -39,6 +40,9 @@ export default {
     onControl(control) {
       this.host.sendControlOutput(control)
       this.host.sendControlChange(this.seat.id, control)
+    },
+    onLearn(control, key) {
+      this.host.sendSingleCC(control, key)
     },
     duplicate() {
       const id = this.host.duplicateSeat(this.seat.id)
@@ -85,7 +89,9 @@ export default {
         v-if='seat.controls.length'
         :controls='seat.controls'
         :accent='seat.color'
+        :learn-mode='learnMode'
         @control='onControl'
+        @learn='onLearn'
       />
       <span v-else class='empty'>No controls</span>
     </div>

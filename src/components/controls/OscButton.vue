@@ -2,22 +2,25 @@
 export default {
   name: "OscButton",
   props: {
-    label: { type: String, default: "Button" }
+    label: { type: String, default: "Button" },
+    value: { type: Number, default: 0 },
+    onValue: { type: Number, default: 1 },
+    offValue: { type: Number, default: 0 }
   },
-  emits: ["press", "release"],
-  data: () => ({ pressed: false }),
+  emits: ["change"],
+  computed: {
+    isOn() { return this.value === this.onValue }
+  },
   methods: {
     down(e) {
       e.preventDefault()
       e.target.setPointerCapture(e.pointerId)
-      this.pressed = true
-      this.$emit("press")
+      this.$emit("change", this.onValue)
     },
     up(e) {
       e.preventDefault()
       e.target.releasePointerCapture(e.pointerId)
-      this.pressed = false
-      this.$emit("release")
+      this.$emit("change", this.offValue)
     }
   }
 }
@@ -26,7 +29,7 @@ export default {
 <template>
   <button
     class='osc-button'
-    :class='{ pressed }'
+    :class='{ on: isOn }'
     @pointerdown='down'
     @pointerup='up'
     @pointercancel='up'
@@ -54,13 +57,12 @@ export default {
   justify-content: center
   overflow: hidden
   outline: 1px solid rgba(0, 0, 0, 0.5)
-  transition: transform 0.1s, box-shadow 0.1s, outline 0.1s
+  transition: background 0.1s, box-shadow 0.1s, outline 0.1s
 
   &:hover
     background: var(--bg-hover, #252542)
 
-  &.pressed
-    transform: scale(0.95)
+  &.on
     background: var(--accent, #4a9eff)
     outline: 2px solid var(--accent, #4a9eff)
     box-shadow: 0 0 12px color-mix(in srgb, var(--accent, #4a9eff) 50%, transparent)

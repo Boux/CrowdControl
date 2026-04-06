@@ -42,6 +42,7 @@ export default class Control {
     if (!interp) {
       this.stopInterp()
       Object.assign(this.interpolatedValues, this.values)
+      if (onTick) onTick(this)
       return
     }
 

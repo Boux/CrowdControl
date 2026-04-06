@@ -48,8 +48,10 @@ export default {
       <OscButton
         v-else-if='c.type === "button"'
         :label='c.label'
-        @press='onChange(c, c.onValue)'
-        @release='onChange(c, c.offValue)'
+        :value='c.interpolatedValues?.value ?? c.values.value ?? 0'
+        :on-value='c.onValue'
+        :off-value='c.offValue'
+        @change='v => onChange(c, v)'
       />
       <Toggle
         v-else-if='c.type === "toggle"'

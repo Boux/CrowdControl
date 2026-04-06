@@ -46,15 +46,14 @@ export const useSessionStore = defineStore("session", {
 
     sendControl(control) {
       // setValues already called by SeatCanvas — just batch for network
-      if (!this._pendingControls) this._pendingControls = {}
-      this._pendingControls[control.id] = control.toWire(DEFAULT_INTERP)
+      if (!this._pendingChanges) this._pendingChanges = []
+      this._pendingChanges.push(control.toWire(DEFAULT_INTERP))
 
       if (!this._sendTimer) {
         this._sendTimer = setTimeout(() => {
           const relay = useRelayStore()
-          const changes = Object.values(this._pendingControls)
-          relay.emitNoAck("control:batch", { seatId: this.currentSeat.id, changes })
-          this._pendingControls = {}
+          relay.emitNoAck("control:batch", { seatId: this.currentSeat.id, changes: this._pendingChanges })
+          this._pendingChanges = []
           this._sendTimer = null
         }, CONTROL_POLL_RATE)
       }

@@ -3,7 +3,8 @@ import {
   ArrowLeft, X, EllipsisVertical, RefreshCw, Move, SlidersVertical,
   Circle, ToggleLeft, ChevronDown, ChevronUp, Plus, Play, Settings,
   FolderOpen, Download, Upload, Send, Copy, Pencil, Trash2, UserX,
-  Camera, LogIn, Shuffle, Check, Smartphone, Tablet, Monitor, Square
+  Camera, LogIn, Shuffle, Check, Smartphone, Tablet, Monitor, Square,
+  Wifi, WifiOff
 } from "lucide-vue-next"
 
 const icons = {
@@ -35,7 +36,9 @@ const icons = {
   "circle": Circle,
   "toggle-left": ToggleLeft,
   "chevron-down": ChevronDown,
-  "chevron-up": ChevronUp
+  "chevron-up": ChevronUp,
+  "wifi": Wifi,
+  "wifi-off": WifiOff
 }
 
 export default {

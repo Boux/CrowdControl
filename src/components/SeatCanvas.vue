@@ -77,7 +77,6 @@ export default {
   width: 100%
   height: 100%
   user-select: none
-
   .control
     position: absolute
 
@@ -96,15 +95,17 @@ export default {
     z-index: 1
 
   .cc-btn
-    padding: 4px 8px
-    background: #e67e22
+    padding: 3px 7px
+    background: var(--orange, #e67e22)
     border: none
+    border-radius: 3px
     color: white
-    font-size: 0.65rem
+    font-family: var(--font-mono, monospace)
+    font-size: 0.6rem
     font-weight: 700
     cursor: pointer
     white-space: nowrap
 
     &:hover
-      background: #f39c12
+      filter: brightness(1.2)
 </style>

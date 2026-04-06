@@ -114,21 +114,25 @@ export default {
 .seat-card
   display: flex
   flex-direction: column
-  background: #0d0d1a
-  border: 2px solid #1a1a2e
-  border-radius: 10px
+  background: var(--bg-raised)
+  border: 1px solid var(--border)
+  border-radius: 8px
   overflow: hidden
+  transition: border-color 0.2s
+
+  &:hover
+    border-color: var(--border-light)
 
 .seat-header
   display: flex
   align-items: center
-  gap: 0.75rem
-  padding: 0.75rem
+  gap: 0.6rem
+  padding: 0.6rem 0.7rem
 
 .color
-  width: 24px
-  height: 24px
-  border-radius: 6px
+  width: 18px
+  height: 18px
+  border-radius: 4px
   flex-shrink: 0
   cursor: pointer
   position: relative
@@ -151,20 +155,21 @@ export default {
 
   .name
     font-weight: 600
-    font-size: 0.9rem
+    font-size: 0.8rem
     white-space: nowrap
     overflow: hidden
     text-overflow: ellipsis
     cursor: text
 
     &:hover
-      color: #4a9eff
+      color: var(--accent)
 
   .name-input
     font-weight: 600
-    font-size: 0.9rem
-    background: #0d0d1a
-    border: 1px solid #4a9eff
+    font-size: 0.8rem
+    font-family: var(--font-ui)
+    background: var(--bg-base)
+    border: 1px solid var(--accent)
     border-radius: 3px
     color: white
     padding: 0 4px
@@ -172,57 +177,61 @@ export default {
     outline: none
 
   .status
-    font-size: 0.675rem
-    color: #666
+    font-size: 0.6rem
+    color: var(--text-muted)
+    text-transform: uppercase
+    letter-spacing: 0.04em
 
     &.occupied
-      color: #4a9eff
+      color: var(--accent)
 
 .seat-controls
-  padding: 0.5rem 0.75rem
+  padding: 0.35rem 0.6rem
 
   .empty
     text-align: center
-    color: #444
-    font-size: 0.75rem
-    padding: 1.5rem 0
+    color: var(--text-muted)
+    font-size: 0.7rem
+    padding: 1.25rem 0
 
 .seat-actions
   display: flex
-  gap: 0.5rem
-  padding: 0.5rem 0.75rem 0.75rem
-  border-top: 1px solid #1a1a2e
+  gap: 0.35rem
+  padding: 0.4rem 0.6rem 0.5rem
+  border-top: 1px solid var(--border)
   align-items: center
 
   &.confirm span
-    font-size: 0.7rem
-    color: #e74c3c
+    font-size: 0.65rem
+    color: var(--red)
+    font-weight: 500
 
   button
     flex: 1
-    padding: 0.4rem
-    background: #1a1a2e
+    padding: 0.35rem
+    background: var(--bg-surface)
     border: none
     border-radius: 4px
-    color: #888
-    font-size: 0.7rem
+    color: var(--text-dim)
+    font-size: 0.65rem
+    font-family: var(--font-ui)
     cursor: pointer
 
     &:hover
-      color: white
-      background: #252542
+      color: var(--text)
+      background: var(--bg-hover)
 
     &.kick
-      color: #e67e22
+      color: var(--orange)
 
       &:hover
-        background: #e67e22
+        background: var(--orange)
         color: white
 
     &.delete
-      color: #e74c3c
+      color: var(--red)
 
       &:hover
-        background: #e74c3c
+        background: var(--red)
         color: white
 </style>

@@ -22,7 +22,7 @@ export default {
       if (e.button === 2) e.preventDefault()
       e.target.setPointerCapture(e.pointerId)
       this.touching = true
-      this.axis = e.button === 1 ? "x" : e.button === 2 ? "y" : null
+      this.axis = e.button === 2 ? "x" : e.button === 1 ? "y" : null
       this.update(e)
     },
     move(e) {
@@ -68,13 +68,16 @@ export default {
   position: relative
   width: 100%
   height: 100%
-  background: #1a1a2e
+  background: var(--bg-surface, #1a1a2e)
+  outline: 1px solid rgba(0, 0, 0, 0.5)
   touch-action: none
   cursor: crosshair
   overflow: hidden
+  transition: outline 0.1s
 
   &.touching
-    box-shadow: 0 0 0 2px var(--accent, #4a9eff)
+    outline: 2px solid var(--accent, #4a9eff)
+    box-shadow: 0 0 8px color-mix(in srgb, var(--accent, #4a9eff) 40%, transparent)
 
 .grid
   position: absolute

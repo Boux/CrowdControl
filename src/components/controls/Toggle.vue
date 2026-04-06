@@ -36,7 +36,7 @@ export default {
   height: 100%
   padding: 0
   border: none
-  background: #1a1a2e
+  background: var(--bg-surface, #1a1a2e)
   color: #fff
   font-size: 0.75rem
   font-weight: 600
@@ -48,12 +48,14 @@ export default {
   align-items: center
   justify-content: center
   overflow: hidden
-  transition: background 0.15s, box-shadow 0.15s
+  outline: 1px solid rgba(0, 0, 0, 0.5)
+  transition: background 0.1s, box-shadow 0.1s, outline 0.1s
 
   &:hover
-    background: #252542
+    background: var(--bg-hover, #252542)
 
   &.on
     background: var(--accent, #4a9eff)
-    box-shadow: 0 0 20px color-mix(in srgb, var(--accent, #4a9eff) 50%, transparent)
+    outline: 2px solid var(--accent, #4a9eff)
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent, #4a9eff) 50%, transparent)
 </style>

@@ -57,96 +57,108 @@ export default {
 
 <style lang='sass' scoped>
 .share
-  margin-left: auto
   display: flex
   align-items: center
-  gap: 0.75rem
+  gap: 0.6rem
 
 .qr
-  width: 110px
-  height: 110px
+  width: 80px
+  height: 80px
   cursor: pointer
-  border-radius: 6px
+  border-radius: 4px
+  opacity: 0.85
+  transition: opacity 0.15s
 
   &:hover
-    outline: 2px solid #4a9eff
+    opacity: 1
+    outline: 1px solid var(--accent)
 
 .share-info
   display: flex
   flex-direction: column
-  gap: 0.25rem
+  gap: 0.2rem
 
 .session-url
-  font-size: 0.625rem
-  color: #555
+  font-size: 0.55rem
+  color: var(--text-muted)
   word-break: break-all
 
 .code-row
   display: flex
-  gap: 0.5rem
+  gap: 0.35rem
 
   input
-    width: 120px
-    padding: 0.5rem
-    border: 1px solid #333
-    border-radius: 6px
-    background: #1a1a2e
-    color: white
-    font-family: monospace
-    font-size: 0.8rem
+    width: 110px
+    padding: 0.35rem 0.5rem
+    border: 1px solid var(--border)
+    border-radius: 4px
+    background: var(--bg-surface)
+    color: var(--text)
+    font-family: var(--font-mono)
+    font-size: 0.7rem
 
   button
-    padding: 0.5rem 0.75rem
-    background: #333
-    border: none
-    border-radius: 6px
-    color: white
+    padding: 0.35rem 0.6rem
+    background: var(--bg-surface)
+    border: 1px solid var(--border)
+    border-radius: 4px
+    color: var(--text-dim)
     cursor: pointer
-    font-size: 0.75rem
+    font-size: 0.65rem
+    font-family: var(--font-ui)
+
+    &:hover
+      color: var(--text)
+      border-color: var(--border-light)
 
 .qr-overlay
   position: fixed
   inset: 0
-  background: rgba(0, 0, 0, 0.8)
+  background: rgba(0, 0, 0, 0.85)
   display: flex
   align-items: center
   justify-content: center
   z-index: 1000
+  backdrop-filter: blur(4px)
 
 .qr-modal
   display: flex
   flex-direction: column
   align-items: center
   gap: 1rem
-  background: #1a1a2e
-  border-radius: 16px
+  background: var(--bg-raised)
+  border: 1px solid var(--border)
+  border-radius: 12px
   padding: 2rem
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5)
 
   .qr-large
-    width: 360px
-    height: 360px
+    width: 320px
+    height: 320px
 
   .qr-modal-url
-    color: #888
-    font-size: 0.85rem
+    color: var(--text-dim)
+    font-size: 0.8rem
     word-break: break-all
     text-align: center
 
   .qr-modal-code
-    font-family: monospace
-    font-size: 1.5rem
-    color: white
+    font-family: var(--font-mono)
+    font-size: 1.4rem
+    color: var(--text)
     letter-spacing: 0.1em
 
   button
     padding: 0.5rem 2rem
-    background: #333
-    border: none
+    background: var(--bg-surface)
+    border: 1px solid var(--border)
     border-radius: 6px
-    color: #888
+    color: var(--text-dim)
     cursor: pointer
-    font-size: 0.85rem
+    font-size: 0.8rem
+    font-family: var(--font-ui)
 
     &:hover
-      color: white
+      color: var(--text)
+      border-color: var(--border-light)
 </style>

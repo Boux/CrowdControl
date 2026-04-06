@@ -18,7 +18,7 @@ export default {
   --border-light: #2a2a48
   --text: #e0e0e8
   --text-dim: #6e6e88
-  --text-muted: #44445a
+  --text-muted: color-mix(in srgb, var(--text) 50%, transparent)
   --accent: #4a9eff
   --accent-glow: rgba(74, 158, 255, 0.15)
   --green: #2ecc71

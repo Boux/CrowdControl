@@ -13,7 +13,11 @@ export default {
   }),
   computed: {
     relay() { return useRelayStore() },
-    session() { return useSessionStore() }
+    session() { return useSessionStore() },
+    lastSession() {
+      try { return JSON.parse(sessionStorage.getItem("crowdosc:lastSession")) }
+      catch { return null }
+    }
   },
   mounted() {},
   beforeUnmount() {
@@ -79,6 +83,10 @@ export default {
         <input v-model='sessionCode' type='text' placeholder='Session code' @keyup.enter='join()' />
         <IconButton icon='log-in' @click='join()' :disabled='connecting'>{{ connecting ? "Joining..." : "Join" }}</IconButton>
       </div>
+
+      <IconButton v-if='lastSession' icon='log-in' class='rejoin-btn' @click='join(lastSession.id)' :disabled='connecting'>
+        Rejoin "{{ lastSession.name }}"
+      </IconButton>
     </template>
   </div>
 </template>
@@ -115,6 +123,21 @@ h1
   &.connected
     background: rgba(74, 158, 255, 0.2)
     color: #4a9eff
+
+.rejoin-btn
+  width: 100%
+  max-width: 300px
+  padding: 0.75rem
+  background: transparent
+  border: 1px solid #2ecc71
+  border-radius: 8px
+  color: #2ecc71
+  font-size: 0.85rem
+  cursor: pointer
+  margin-top: 1rem
+
+  &:disabled
+    opacity: 0.5
 
 .scan-btn
   width: 100%

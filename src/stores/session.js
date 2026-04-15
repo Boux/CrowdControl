@@ -25,6 +25,7 @@ export const useSessionStore = defineStore("session", {
       this.session = response.session
       hydrateSeats(this.session.seats)
       this.setupListeners()
+      sessionStorage.setItem("crowdosc:lastSession", JSON.stringify({ id: sessionId, name: response.session.name, time: Date.now() }))
       return response.session
     },
 

@@ -2,6 +2,8 @@
 
 Collaborative control surfaces for live events. Audience members join from their phones and get assigned interactive controls (faders, XY pads, buttons, toggles) that send OSC and MIDI to your software.
 
+Live performance: https://www.youtube.com/watch?v=7pQCuivTnGY
+
 <img width="1015" height="825" alt="image" src="https://github.com/user-attachments/assets/cd6e0fec-5383-46b3-8a7f-4c0ffbf0998d" />
 
 ## How it works

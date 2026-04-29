@@ -46,6 +46,6 @@ Each control can be mapped to an OSC address and/or a MIDI CC.
 
 ## Settings
 
-- **Relay Server** — the server that connects phones to your app. A default server is provided, or you can add your own.
+- **Relay Server** — the server that connects phones to your app. A default server is provided, or you can add your own. The default server is hosted on railway and is currently offline until I fully release the application, it's still available to self-host until then.
 - **OSC Output** — enable/disable, set the host, port, and protocol (UDP/TCP) for your OSC receiver.
 - **MIDI Output** — enable/disable, select a MIDI device on your system.

@@ -16,15 +16,21 @@ Collaborative control surfaces for live events. Audience members join from their
 
 ### Download
 
-Download the latest release from the [Releases](../../releases) page.
+Currently still in development, only buildable from source, will have releases soon.
 
 ### From source
 
 Requires [Node.js](https://nodejs.org/) 22+ and [Yarn](https://yarnpkg.com/).
 
 ```bash
+# install dependencies
 yarn install
+
+# start application
 yarn electron
+
+# start relay server
+yarn dev
 ```
 
 ## Controls

@@ -1,4 +1,6 @@
 <script>
+import { ref } from "vue"
+import { useSortable } from "@vueuse/integrations/useSortable"
 import { useHostStore } from "../../stores/host"
 import { hydrateSeats } from "../../models/index"
 import SeatCard from "../../components/dashboard/SeatCard.vue"
@@ -7,6 +9,16 @@ import SessionQr from "../../components/dashboard/SessionQr.vue"
 export default {
   name: "DashboardView",
   components: { SeatCard, SessionQr },
+  setup() {
+    const host = useHostStore()
+    const seatsGrid = ref(null)
+    useSortable(seatsGrid, () => host.session?.seats ?? [], {
+      animation: 150,
+      handle: ".seat-header",
+      onEnd: () => host.syncSession()
+    })
+    return { seatsGrid }
+  },
   data: () => ({
     newSeatId: null,
     goingLive: false,
@@ -181,7 +193,7 @@ export default {
           </button>
         </div>
 
-        <div class='seats-grid'>
+        <div class='seats-grid' ref='seatsGrid'>
           <SeatCard v-for='seat in seats' :key='seat.id' :seat='seat' :auto-rename='seat.id === newSeatId' :learn-mode='learnMode' @duplicate='id => newSeatId = id' />
         </div>
       </div>

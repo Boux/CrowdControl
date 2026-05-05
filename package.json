@@ -11,6 +11,8 @@
     "electron:build": "vite build --config vite.electron.config.js && electron-builder"
   },
   "dependencies": {
+    "@vueuse/core": "^14.2.1",
+    "@vueuse/integrations": "^14.2.1",
     "express": "^5.2.1",
     "lucide-vue-next": "^0.564.0",
     "nanoid": "^5.0.0",
@@ -19,6 +21,7 @@
     "qrcode": "^1.5.4",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.0",
+    "sortablejs": "^1.15.7",
     "vue": "^3.5.24",
     "vue-router": "^4.6.0"
   },

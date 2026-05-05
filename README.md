@@ -2,6 +2,8 @@
 
 Collaborative control surfaces for live events. Audience members join from their phones and get assigned interactive controls (faders, XY pads, buttons, toggles) that send OSC and MIDI to your software.
 
+Live performance: https://www.youtube.com/watch?v=7pQCuivTnGY
+
 <img width="1015" height="825" alt="image" src="https://github.com/user-attachments/assets/cd6e0fec-5383-46b3-8a7f-4c0ffbf0998d" />
 
 ## How it works
@@ -16,15 +18,21 @@ Collaborative control surfaces for live events. Audience members join from their
 
 ### Download
 
-Download the latest release from the [Releases](../../releases) page.
+Currently still in development, only buildable from source, will have releases soon.
 
 ### From source
 
 Requires [Node.js](https://nodejs.org/) 22+ and [Yarn](https://yarnpkg.com/).
 
 ```bash
+# install dependencies
 yarn install
+
+# start application
 yarn electron
+
+# start relay server
+yarn dev
 ```
 
 ## Controls
@@ -40,6 +48,6 @@ Each control can be mapped to an OSC address and/or a MIDI CC.
 
 ## Settings
 
-- **Relay Server** — the server that connects phones to your app. A default server is provided, or you can add your own.
+- **Relay Server** — the server that connects phones to your app. A default server is provided, or you can add your own. The default server is hosted on a free trial of [railway](https://crowdcontrol-production.up.railway.app/) and is currently offline until I fully release the application, it's still available to self-host until then.
 - **OSC Output** — enable/disable, set the host, port, and protocol (UDP/TCP) for your OSC receiver.
 - **MIDI Output** — enable/disable, select a MIDI device on your system.

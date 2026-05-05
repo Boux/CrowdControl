@@ -1,0 +1,15 @@
+name: crowdosc
+
+services:
+  node:
+    image: node:24-alpine
+    command: sh -c "yarn install && yarn build && yarn start"
+    working_dir: /app
+    ports:
+      - "${PORT:-8080}:3001"
+    volumes:
+      - .:/app
+      - node-modules:/app/node_modules
+
+volumes:
+  node-modules:
